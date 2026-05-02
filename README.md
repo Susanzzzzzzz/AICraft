@@ -27,7 +27,7 @@
 
 ## 🎮 在线体验
 
-直接打开 `dist/Minicraft.html` 即可游玩，无需安装任何依赖，无需服务器。
+直接打开 `dist/AICraft.html` 即可游玩，无需安装任何依赖，无需服务器。
 
 ```
 手机横屏体验更佳！
@@ -118,7 +118,7 @@ npm install
 node build.js
 
 # 打开构建产物
-open dist/Minicraft.html
+open dist/AICraft.html
 ```
 
 ## 🏗️ 技术栈
@@ -146,7 +146,7 @@ open dist/Minicraft.html
 ├── hud.js                     # HUD 界面
 ├── style.css                  # 样式
 ├── build.js                   # 构建脚本
-├── dist/Minicraft.html        # 构建产物（单文件）
+├── dist/AICraft.html        # 构建产物（单文件）
 ├── docs/
 │   ├── 操作手册.md            # 游戏操作说明
 │   └── 技术实现手册.md         # 架构与技术详解

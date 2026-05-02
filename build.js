@@ -45,8 +45,8 @@ async function build() {
     html = html.replace(/<img[^>]*WechatIMG282\.jpeg[^>]*>/, '');
   }
 
-  writeFileSync(resolve(DIST, 'Minicraft.html'), html);
-  console.log(`Built ${(html.length / 1024).toFixed(0)}KB to dist/Minicraft.html`);
+  writeFileSync(resolve(DIST, 'AICraft.html'), html);
+  console.log(`Built ${(html.length / 1024).toFixed(0)}KB to dist/AICraft.html`);
 }
 
 build().catch(e => { console.error(e); process.exit(1); });

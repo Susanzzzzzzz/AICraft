@@ -27,7 +27,7 @@
 
 # 构建规则
 - 每次修改代码后必须执行 `node build.js`
-- 构建生成单个合并 HTML 文件到 `dist/Minicraft.html`
+- 构建生成单个合并 HTML 文件到 `dist/AICraft.html`
 - 构建产物为纯静态文件，无需服务器即可在浏览器打开
 
 # 语言规则
