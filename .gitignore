@@ -30,3 +30,13 @@ openspec/changes/archive/
 
 # 其他目录
 AI Craft/
+
+# Claude Code 个人配置
+.claude/
+
+# 随机图片
+WechatIMG*.jpeg
+WechatIMG*.jpg
+
+# OpenSpec 历史变更记录
+openspec/changes/
