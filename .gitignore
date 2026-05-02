@@ -1,0 +1,43 @@
+node_modules/
+logs/
+dist/
+.DS_Store
+*.log
+
+# 开发调试截图
+pic/*.pic.jpg
+pic/企业微信*.png
+pic/失败*.png
+pic/报错*.png
+pic/错误*.png
+剪贴板*.jpg
+
+# 测试产物
+test-results/
+
+# 压缩备份
+*.7z
+
+# 无依赖项目
+package.json
+package-lock.json
+
+# 已归档的旧变更
+openspec/changes/archive/
+
+# VS Code 工作区
+*.code-workspace
+
+# 其他目录
+AI Craft/
+
+# Claude Code 个人配置
+.claude/
+CLAUDE.md
+
+# 随机图片
+WechatIMG*.jpeg
+WechatIMG*.jpg
+
+# OpenSpec 历史变更记录
+openspec/changes/

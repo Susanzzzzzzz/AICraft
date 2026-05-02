@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AICraft — 方块世界</title>
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
+</head>
+<body>
+  <canvas id="game-canvas"></canvas>
+
+  <!-- Overlay (single column centered) -->
+  <div id="overlay">
+    <!-- Start screen -->
+    <div id="start-screen">
+      <div class="start-content">
+        <div class="start-left">
+          <img src="WechatIMG282.jpeg" alt="快乐童年" id="start-photo">
+        </div>
+        <div class="start-right">
+          <h1>⛏️ AICraft</h1>
+          <p class="subtitle">方块世界</p>
+          <div class="start-controls">
+            <div class="start-controls-title">操作说明</div>
+            <div class="start-control-row"><span class="start-key">WASD</span><span class="start-action">移动 / 连按闪避</span></div>
+            <div class="start-control-row"><span class="start-key">左键</span><span class="start-action">破坏方块 / 攻击</span></div>
+            <div class="start-control-row"><span class="start-key">右键</span><span class="start-action">放置方块</span></div>
+            <div class="start-control-row"><span class="start-key">中键</span><span class="start-action">拾取方块</span></div>
+            <div class="start-control-row"><span class="start-key">Space</span><span class="start-action">跳跃 / 飞行上升</span></div>
+            <div class="start-control-row"><span class="start-key">Shift</span><span class="start-action">飞行下降</span></div>
+            <div class="start-control-row"><span class="start-key">E</span><span class="start-action">打开背包</span></div>
+            <div class="start-control-row"><span class="start-key">Tab</span><span class="start-action">飞行模式开关</span></div>
+            <div class="start-control-row"><span class="start-key">Q</span><span class="start-action">切换武器</span></div>
+            <div class="start-control-row"><span class="start-key">X / C</span><span class="start-action">使用 / 切换技能</span></div>
+            <div class="start-control-row"><span class="start-key">G</span><span class="start-action">格挡</span></div>
+            <div class="start-control-row"><span class="start-key">F / F5</span><span class="start-action">切换视角</span></div>
+            <div class="start-control-row"><span class="start-key">H</span><span class="start-action">详细操作说明</span></div>
+          </div>
+          <button id="start-btn">点击开始游戏</button>
+          <div id="character-preview-container"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Pause screen - simplified -->
+    <div id="pause-screen" class="hidden">
+      <div class="pause-content">
+        <div class="pause-left">
+          <div class="pause-header">
+            <h1>暂停</h1>
+            <span id="current-role-name">Steve</span>
+          </div>
+          <div id="role-cards"></div>
+          <div id="pause-actions">
+            <button id="continue-btn">▶ 继续游戏</button>
+            <button id="pause-reset-btn">↺ 重置到出生点</button>
+            <button id="pause-level-select-btn">关卡选择</button>
+          </div>
+          <div id="pause-volume">
+            <label>BGM: <input type="range" id="pause-bgm-volume" min="0" max="1" step="0.1" value="0.5"></label>
+            <label>SFX: <input type="range" id="pause-sfx-volume" min="0" max="1" step="0.1" value="0.8"></label>
+          </div>
+        </div>
+        <div class="pause-right">
+          <div id="pause-preview-container"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 关卡选择界面 -->
+    <div id="level-select-screen" class="right-panel hidden">
+      <div class="right-top">
+        <h1>选择关卡</h1>
+        <div id="level-cards">
+          <!-- 由 JS 动态生成 -->
+        </div>
+        <div id="level-select-actions">
+          <button id="level-select-back-btn">返回</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help Panel -->
+  <div id="help-panel" class="hidden">
+    <div class="help-panel-content">
+      <h3>--- 操作说明 ---</h3>
+      <div class="help-panel-list">
+        <div class="help-row"><span class="help-key">WASD</span><span class="help-desc">移动 / 连按闪避</span></div>
+        <div class="help-row"><span class="help-key">Space</span><span class="help-desc">跳跃 / 飞行上升</span></div>
+        <div class="help-row"><span class="help-key">Shift</span><span class="help-desc">飞行下降</span></div>
+        <div class="help-row"><span class="help-key">左键</span><span class="help-desc">破坏方块 / 攻击</span></div>
+        <div class="help-row"><span class="help-key">右键</span><span class="help-desc">放置方块</span></div>
+        <div class="help-row"><span class="help-key">Ctrl+左键</span><span class="help-desc">放置方块</span></div>
+        <div class="help-row"><span class="help-key">Ctrl+右键</span><span class="help-desc">切换灯光</span></div>
+        <div class="help-row"><span class="help-key">中键</span><span class="help-desc">拾取方块</span></div>
+        <div class="help-row"><span class="help-key">1-8</span><span class="help-desc">选择方块</span></div>
+        <div class="help-row"><span class="help-key">E</span><span class="help-desc">打开背包</span></div>
+        <div class="help-row"><span class="help-key">R</span><span class="help-desc">循环物品类型</span></div>
+        <div class="help-row"><span class="help-key">Tab</span><span class="help-desc">飞行模式开关</span></div>
+        <div class="help-row"><span class="help-key">F / F5</span><span class="help-desc">切换视角</span></div>
+        <div class="help-row"><span class="help-key">F3</span><span class="help-desc">诊断面板</span></div>
+        <div class="help-row"><span class="help-key">F6</span><span class="help-desc">昼夜倍速</span></div>
+        <div class="help-row"><span class="help-key">Q</span><span class="help-desc">切换武器</span></div>
+        <div class="help-row"><span class="help-key">G</span><span class="help-desc">格挡</span></div>
+        <div class="help-row"><span class="help-key">X</span><span class="help-desc">使用技能</span></div>
+        <div class="help-row"><span class="help-key">C</span><span class="help-desc">循环技能</span></div>
+        <div class="help-row"><span class="help-key">H</span><span class="help-desc">显示/隐藏本面板</span></div>
+        <div class="help-row"><span class="help-key">ESC</span><span class="help-desc">暂停 / 返回</span></div>
+        <div class="help-row"><span class="help-key">T</span><span class="help-desc">聊天</span></div>
+        <div class="help-row"><span class="help-key">/</span><span class="help-desc">命令</span></div>
+        <div class="help-row"><span class="help-key">`</span><span class="help-desc">控制台</span></div>
+        <div class="help-row"><span class="help-key">方向键</span><span class="help-desc">模拟鼠标</span></div>
+        <div class="help-row"><span class="help-key">Enter</span><span class="help-desc">模拟点击</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Typing Display -->
+  <div id="typing-display" class="hidden">
+    <span id="typing-prefix">></span>
+    <span id="typing-buffer"></span>
+    <span id="typing-cursor">_</span>
+  </div>
+
+  <!-- Touch Controls Container -->
+  <div id="touch-controls-container"></div>
+
+  <!-- 关卡通关通知 -->
+  <div id="level-complete-notification" class="hidden">
+    <div id="level-complete-content">
+      <h2 id="level-complete-title">任务完成!</h2>
+      <p id="level-complete-msg"></p>
+      <div id="level-complete-rewards"></div>
+      <div id="level-complete-actions">
+        <button id="level-complete-select-btn">选择关卡</button>
+        <button id="level-complete-close-btn">继续游戏</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <!-- 准星 -->
+    <div id="crosshair">+</div>
+
+    <!-- 快捷栏 -->
+    <div id="hotbar">
+      <div class="hotbar-slot selected" data-type="1">
+        <div class="block-preview grass"></div>
+        <span class="slot-key">1</span>
+        <span class="slot-name">草</span>
+      </div>
+      <div class="hotbar-slot" data-type="2">
+        <div class="block-preview dirt"></div>
+        <span class="slot-key">2</span>
+        <span class="slot-name">土</span>
+      </div>
+      <div class="hotbar-slot" data-type="3">
+        <div class="block-preview stone"></div>
+        <span class="slot-key">3</span>
+        <span class="slot-name">石</span>
+      </div>
+      <div class="hotbar-slot" data-type="4">
+        <div class="block-preview wood"></div>
+        <span class="slot-key">4</span>
+        <span class="slot-name">木</span>
+      </div>
+      <div class="hotbar-slot" data-type="5">
+        <div class="block-preview brick"></div>
+        <span class="slot-key">5</span>
+        <span class="slot-name">砖</span>
+      </div>
+      <div class="hotbar-slot" data-type="6">
+        <div class="block-preview water"></div>
+        <span class="slot-key">6</span>
+        <span class="slot-name">水</span>
+      </div>
+      <div class="hotbar-slot" data-type="7">
+        <div class="block-preview leaves"></div>
+        <span class="slot-key">7</span>
+        <span class="slot-name">叶</span>
+      </div>
+      <div class="hotbar-slot" data-type="8">
+        <div class="block-preview flower"></div>
+        <span class="slot-key">8</span>
+        <span class="slot-name">花</span>
+      </div>
+    </div>
+
+    <!-- 手持方块 (第一人称) -->
+    <div id="held-block">
+      <div class="block-preview grass" id="held-preview"></div>
+    </div>
+
+    <!-- 技能栏 -->
+    <div id="skill-bar">
+      <div id="skill-slots"></div>
+      <div id="skill-name" class="skill-name-display"></div>
+    </div>
+
+    <!-- Blocking overlay -->
+    <div id="block-overlay"></div>
+
+    <!-- Bow charge indicator -->
+    <div id="bow-charge-container">
+      <div id="bow-charge-bar"><div id="bow-charge-fill"></div></div>
+      <div id="bow-charge-label">蓄力中...</div>
+    </div>
+
+    <!-- 关卡信息 -->
+    <div id="level-info"  class="top-info-item">
+      <span id="level-name"></span>
+      <span id="level-tasks"></span>
+    </div>
+
+    <!-- 顶部信息栏 -->
+    <div id="top-info">
+      <span id="time-display" class="top-info-item"></span>
+      <span id="health-display" class="top-info-item"></span>
+      <span id="weapon-display" class="top-info-item"></span>
+      <span id="armor-display" class="top-info-item"></span>
+      <span id="armor-bar" class="top-info-item"><span class="armor-icon">🛡</span><span id="armor-value">0</span></span>
+    </div>
+
+    <!-- 调试信息 -->
+    <div id="debug-info"></div>
+
+    <!-- Inventory overlay -->
+    <div id="inventory-overlay" class="hidden">
+      <div class="inventory-container">
+        <h2>背包</h2>
+        <div class="inventory-layout">
+          <!-- Left: storage + hotbar -->
+          <div class="inventory-left">
+            <div class="storage-grid" id="storage-grid"></div>
+            <div class="hotbar-row" id="inventory-hotbar"></div>
+          </div>
+          <!-- Armor slots -->
+          <div class="armor-slots" id="armor-slots">
+            <div class="armor-slot" data-armor-slot="head" title="头盔"></div>
+            <div class="armor-slot" data-armor-slot="chest" title="胸甲"></div>
+            <div class="armor-slot" data-armor-slot="legs" title="护腿"></div>
+            <div class="armor-slot" data-armor-slot="feet" title="靴子"></div>
+            <div class="armor-defense-display">防御: <span id="armor-defense-value">0</span></div>
+          </div>
+          <!-- Right: crafting + stats -->
+          <div class="inventory-right">
+            <div class="crafting-section">
+              <h3>合成</h3>
+              <div class="crafting-grid" id="crafting-grid">
+                <div class="craft-slot" data-index="0"></div>
+                <div class="craft-slot" data-index="1"></div>
+                <div class="craft-slot" data-index="2"></div>
+                <div class="craft-slot" data-index="3"></div>
+              </div>
+              <div class="craft-arrow">→</div>
+              <div class="craft-result" id="craft-result-slot"></div>
+            </div>
+            <div class="inventory-stats">
+              <div class="health-display" id="inventory-health"></div>
+            </div>
+          </div>
+        </div>
+        <div class="inventory-volume">
+          <label>BGM: <input type="range" id="bgm-volume" min="0" max="1" step="0.1" value="0.5"></label>
+          <label>SFX: <input type="range" id="sfx-volume" min="0" max="1" step="0.1" value="0.8"></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chest overlay -->
+  <div id="chest-overlay" class="hidden">
+    <div class="chest-container">
+      <h2>宝箱</h2>
+      <div class="chest-grid" id="chest-grid"></div>
+      <button id="chest-close-btn">关闭</button>
+    </div>
+  </div>
+
+  <!-- Error overlay for debugging -->
+  <div id="error-overlay" style="position:fixed;bottom:0;left:0;right:0;background:rgba(200,0,0,0.9);color:#fff;padding:12px;font-size:14px;z-index:9999;display:none;font-family:monospace;white-space:pre-wrap;max-height:200px;overflow-y:auto;"></div>
+  <script>
+  window.onerror = function(msg, url, line, col, err) {
+    const el = document.getElementById('error-overlay');
+    if (el) {
+      el.style.display = 'block';
+      el.textContent = 'ERROR: ' + msg + '\n' + (err && err.stack ? err.stack : 'at ' + url + ':' + line + ':' + col);
+    }
+  };
+  window.addEventListener('unhandledrejection', function(e) {
+    const el = document.getElementById('error-overlay');
+    if (el) {
+      el.style.display = 'block';
+      el.textContent = 'PROMISE: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason)) + '\n' + (e.reason && e.reason.stack ? e.reason.stack : '');
+    }
+  });
+  </script>
+  <script type="module" src="main.js"></script>
+</body>
+</html>
