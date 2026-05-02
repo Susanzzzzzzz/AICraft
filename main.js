@@ -27,7 +27,7 @@ import { WeatherManager } from './weather.js';
 import { HostileMob, Zombie, Skeleton, Spider, Creeper, Enderman, Wolf, CaveSpider, DropItem } from './hostiles.js';
 import { Diagnostics } from './diagnostics.js';
 
-const SAVE_KEY = 'minicraft_save_v4';
+const SAVE_KEY = 'aicraft_save_v4';
 
 class Game {
   constructor() {
@@ -1485,7 +1485,7 @@ class Game {
     // Handle light toggle (Ctrl+right click)
     if (this.input.consumeAction('light') && hitResult.hit) {
       // In Craft this toggles a light flag on the block.
-      // Minicraft doesn't have per-block lighting yet - placeholder.
+      // AICraft doesn't have per-block lighting yet - placeholder.
       console.log('Light toggle at', hitResult.position);
     }
 
@@ -2710,6 +2710,13 @@ class Game {
 
   loadWorld() {
     try {
+      // 迁移旧存档到新键名
+      const OLD_KEY = 'minicraft_save_v4';
+      const oldRaw = localStorage.getItem(OLD_KEY);
+      if (oldRaw && !localStorage.getItem(SAVE_KEY)) {
+        localStorage.setItem(SAVE_KEY, oldRaw);
+        localStorage.removeItem(OLD_KEY);
+      }
       const raw = localStorage.getItem(SAVE_KEY);
       if (!raw) return null;
       const data = JSON.parse(raw);

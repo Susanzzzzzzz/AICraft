@@ -1,4 +1,4 @@
-// Minicraft 自诊断模块 — 实时性能监控 + 卡死检测
+// AICraft 自诊断模块 — 实时性能监控 + 卡死检测
 // 按 F3 切换诊断面板
 // 使用方式: import { Diagnostics } from './diagnostics.js'
 

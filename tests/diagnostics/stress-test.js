@@ -1,4 +1,4 @@
-// Minicraft 自测程序 — 卡死问题诊断
+// AICraft 自测程序 — 卡死问题诊断
 // 在 Node.js 环境下独立运行，无需浏览器/Three.js
 // 用法: node tests/diagnostics/stress-test.js
 
@@ -33,7 +33,7 @@ function reportLine(r) {
 }
 
 // ===== 1. 世界生成 =====
-console.log('=== Minicraft 自测程序 ===\n');
+console.log('=== AICraft 自测程序 ===\n');
 console.log('正在生成世界...');
 
 const world = new World();
@@ -220,7 +220,7 @@ console.log('');
 for (const f of findings) console.log('  ' + f);
 
 // ===== 6. 写入文件 =====
-const content = `# Minicraft 诊断报告
+const content = `# AICraft 诊断报告
 
 生成时间: ${new Date().toLocaleString('zh-CN')}
 世界大小: ${WORLD_WIDTH}×${WORLD_HEIGHT}×${WORLD_DEPTH} = ${WORLD_WIDTH * WORLD_HEIGHT * WORLD_DEPTH} 方块

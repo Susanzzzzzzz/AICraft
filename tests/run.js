@@ -1,4 +1,4 @@
-// Minicraft Test Runner — runs L1 → L2 → L3 tests sequentially
+// AICraft Test Runner — runs L1 → L2 → L3 tests sequentially
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -62,7 +62,7 @@ async function runTest(name, filePath) {
 
 async function main() {
   console.log('╔══════════════════════════════════════╗');
-  console.log('║     Minicraft Test Runner            ║');
+  console.log('║     AICraft Test Runner             ║');
   console.log('╚══════════════════════════════════════╝\n');
 
   for (const test of TEST_FILES) {
