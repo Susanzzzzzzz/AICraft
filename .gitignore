@@ -19,7 +19,11 @@ test-results/
 *.7z
 
 # 无依赖项目
+package.json
 package-lock.json
+
+# 已归档的旧变更
+openspec/changes/archive/
 
 # VS Code 工作区
 *.code-workspace
