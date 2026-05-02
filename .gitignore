@@ -1,0 +1,28 @@
+node_modules/
+logs/
+dist/
+.DS_Store
+*.log
+
+# 开发调试截图
+pic/*.pic.jpg
+pic/企业微信*.png
+pic/失败*.png
+pic/报错*.png
+pic/错误*.png
+剪贴板*.jpg
+
+# 测试产物
+test-results/
+
+# 压缩备份
+*.7z
+
+# 无依赖项目
+package-lock.json
+
+# VS Code 工作区
+*.code-workspace
+
+# 其他目录
+AI Craft/

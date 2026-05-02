@@ -1,0 +1,1425 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  overflow: hidden;
+  background: #000;
+  font-family: 'Courier New', monospace;
+  user-select: none;
+}
+
+#game-canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ===== Overlay (单列居中) ===== */
+#overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85);
+  z-index: 100;
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#start-screen, #pause-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  max-width: 700px;
+  padding: 20px;
+}
+
+.start-content {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 24px;
+  width: 100%;
+  max-width: 650px;
+}
+
+.start-left {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#start-photo {
+  width: 200px;
+  height: auto;
+  border-radius: 4px;
+  border: 2px solid rgba(255,255,255,0.2);
+  object-fit: cover;
+}
+
+.start-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+#start-screen h1 {
+  font-size: 48px;
+  text-shadow: 3px 3px 0 #333;
+  margin-bottom: -4px;
+}
+
+#start-screen .subtitle {
+  font-size: 16px;
+  color: #aaa;
+  margin-bottom: 4px;
+}
+
+.start-controls {
+  width: 100%;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.start-controls-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #fff;
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  text-align: center;
+}
+
+.start-control-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  line-height: 22px;
+  gap: 12px;
+}
+
+.start-control-row .start-key {
+  color: #fff;
+  text-align: right;
+  min-width: 70px;
+}
+
+.start-control-row .start-action {
+  color: #ccc;
+  text-align: left;
+}
+
+/* Legacy - kept for level-select-screen */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 40px 30px;
+  min-height: 0;
+}
+.right-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.right-bottom {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ===== 按钮 ===== */
+#start-btn {
+  padding: 14px 48px;
+  font-size: 20px;
+  font-family: 'Courier New', monospace;
+  background: #4CAF50;
+  color: #fff;
+  border: 3px solid #388E3C;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-radius: 4px;
+}
+
+#start-btn:hover {
+  background: #66BB6A;
+}
+
+/* ===== Help Panel (ported from Craft) ===== */
+#help-panel {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  z-index: 80;
+  background: rgba(0,0,0,0.55);
+  padding: 12px;
+  width: 260px;
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  pointer-events: none;
+}
+.help-panel-content h3 {
+  font-size: 14px;
+  margin-bottom: 4px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  font-weight: bold;
+  color: #fff;
+}
+.help-panel-list {
+  display: flex;
+  flex-direction: column;
+}
+.help-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  line-height: 22px;
+}
+.help-key {
+  color: #fff;
+  text-align: right;
+  min-width: 70px;
+}
+.help-desc {
+  color: #ccc;
+  text-align: left;
+}
+
+/* ===== Typing Display ===== */
+#typing-display {
+  position: fixed;
+  bottom: 12px;
+  left: 12px;
+  z-index: 70;
+  background: rgba(0,0,0,0.6);
+  padding: 8px 14px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  color: #fff;
+  pointer-events: none;
+}
+#typing-prefix {
+  color: #4CAF50;
+  margin-right: 4px;
+}
+#typing-cursor {
+  animation: blink 0.6s step-end infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* ===== Touch Controls Container ===== */
+#touch-controls-container {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 55;
+  pointer-events: none;
+  display: none;
+}
+
+/* ===== 角色预览（缩小到右下角） ===== */
+#character-preview-container {
+  width: 120px;
+  height: 180px;
+  border: 2px solid #4CAF50;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #87CEEB;
+}
+
+/* ===== 准星 ===== */
+#crosshair {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: 28px;
+  font-weight: bold;
+  text-shadow: 0 0 3px #000, 0 0 3px #000;
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* ===== 快捷栏 ===== */
+#hotbar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  z-index: 50;
+}
+
+.hotbar-slot {
+  width: 56px;
+  height: 64px;
+  background: rgba(0,0,0,0.6);
+  border: 2px solid #555;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: border-color 0.15s;
+}
+
+.hotbar-slot.selected {
+  border-color: #fff;
+  background: rgba(255,255,255,0.15);
+}
+
+.slot-key {
+  position: absolute;
+  top: 2px; left: 4px;
+  font-size: 10px;
+  color: #aaa;
+}
+
+.slot-name {
+  font-size: 9px;
+  color: #ccc;
+  margin-top: 2px;
+}
+
+.block-preview {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(0,0,0,0.3);
+}
+
+.block-preview.grass  { background: #4CAF50; }
+.block-preview.dirt   { background: #8D6E63; }
+.block-preview.stone  { background: #9E9E9E; }
+.block-preview.wood   { background: #795548; }
+.block-preview.brick  { background: #C62828; }
+.block-preview.water  { background: rgba(30,136,229,0.6); }
+.block-preview.leaves { background: #66BB6A; }
+.block-preview.flower { background: #FF7043; }
+.block-preview.mud    { background: #5D4037; }
+.block-preview.clay   { background: #90A4AE; }
+.block-preview.lily_pad { background: #4CAF50; }
+.block-preview.reed   { background: #827717; }
+
+/* ===== 手持方块 ===== */
+#held-block {
+  position: fixed;
+  bottom: 100px;
+  right: 40px;
+  z-index: 50;
+  pointer-events: none;
+}
+
+#held-block .block-preview {
+  width: 48px;
+  height: 48px;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+  border: 2px solid rgba(255,255,255,0.2);
+}
+
+/* ===== 调试信息 ===== */
+#debug-info {
+  position: fixed;
+  top: 10px; left: 10px;
+  color: #fff;
+  font-size: 12px;
+  z-index: 50;
+  pointer-events: none;
+  text-shadow: 0 0 3px #000;
+  line-height: 1.6;
+}
+
+/* ===== 顶部信息栏 ===== */
+#top-info {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.top-info-item {
+  color: #fff;
+  font-size: 14px;
+  text-shadow: 0 0 3px #000;
+  background: rgba(0,0,0,0.4);
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+/* ===== 背包界面 ===== */
+#inventory-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 90;
+}
+
+.inventory-container {
+  background: rgba(30,30,30,0.95);
+  border: 2px solid #555;
+  border-radius: 8px;
+  padding: 20px;
+  color: #fff;
+  width: 90vw;
+  max-width: 600px;
+}
+
+.inventory-container h2 {
+  text-align: center;
+  margin-bottom: 15px;
+  color: #4CAF50;
+}
+
+.inventory-layout {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+}
+
+.storage-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 40px);
+  gap: 3px;
+  margin-bottom: 8px;
+}
+
+.hotbar-row {
+  display: flex;
+  gap: 3px;
+  justify-content: center;
+}
+
+.inv-slot, .craft-slot, .craft-result {
+  width: 40px;
+  height: 40px;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid #555;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-size: 11px;
+}
+
+.inv-slot:hover, .craft-slot:hover {
+  border-color: #fff;
+}
+
+.inv-slot.selected {
+  border-color: #fff;
+  background: rgba(255,255,255,0.15);
+}
+
+.inv-slot .item-count, .craft-slot .item-count, .craft-result .item-count {
+  position: absolute;
+  bottom: 1px;
+  right: 3px;
+  color: #fff;
+  font-size: 10px;
+  text-shadow: 0 0 2px #000;
+}
+
+.item-preview {
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(0,0,0,0.3);
+}
+
+/* Drag ghost element for inventory drag-and-drop */
+.drag-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 10000;
+  width: 40px;
+  height: 40px;
+  background: rgba(0,0,0,0.6);
+  border: 2px solid #fff;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.drag-ghost .item-count {
+  position: absolute;
+  bottom: 1px;
+  right: 3px;
+  color: #fff;
+  font-size: 10px;
+  text-shadow: 0 0 2px #000;
+}
+
+.inventory-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.crafting-section {
+  text-align: center;
+}
+
+.crafting-section h3 {
+  margin-bottom: 8px;
+  color: #aaa;
+  font-size: 14px;
+}
+
+.crafting-grid {
+  display: grid;
+  grid-template-columns: 40px 40px;
+  grid-template-rows: 40px 40px;
+  gap: 3px;
+  margin-bottom: 8px;
+}
+
+.craft-arrow {
+  font-size: 24px;
+  color: #aaa;
+  margin: 5px 0;
+}
+
+.craft-result {
+  border-color: #FFD700;
+  cursor: pointer;
+}
+
+.craft-result:hover {
+  border-color: #FFA500;
+  background: rgba(255,215,0,0.15);
+}
+
+.inventory-stats {
+  text-align: center;
+}
+
+.health-display {
+  font-size: 16px;
+  color: #FF4444;
+}
+
+.inventory-volume {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 12px;
+  font-size: 12px;
+  color: #aaa;
+}
+
+.inventory-volume input {
+  width: 80px;
+  cursor: pointer;
+}
+
+/* Item colors for inventory */
+.item-preview.plank    { background: #C4A86C; }
+.item-preview.stick    { background: #A08850; }
+.item-preview.sword_wood      { background: #8D6E63; }
+.item-preview.sword_stone     { background: #9E9E9E; }
+.item-preview.sword_iron      { background: #C0C0C0; }
+.item-preview.sword_diamond   { background: #2BD2E8; }
+.item-preview.sword_netherite { background: #4A0E4E; }
+.item-preview.diamond         { background: #2BD2E8; }
+.item-preview.diamond_chestplate { background: #2BD2E8; }
+.item-preview.iron_ingot      { background: #C0C0C0; }
+.item-preview.netherite_scrap { background: #4A0E4E; }
+.item-preview.sword_frostmourne { background: #4FC3F7; box-shadow: 0 0 4px #4FC3F7; }
+.item-preview.sword_dragon     { background: #FF5722; box-shadow: 0 0 4px #FF5722; }
+.item-preview.slime_ball       { background: #66BB6A; }
+.item-preview.mud              { background: #5D4037; }
+.item-preview.clay             { background: #90A4AE; }
+.item-preview.lily_pad         { background: #4CAF50; }
+.item-preview.reed             { background: #827717; }
+
+/* ===== Pause Screen ===== */
+#pause-screen h1 {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+.pause-content {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 24px;
+  align-items: stretch;
+}
+.pause-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.pause-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pause-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+#current-role-name {
+  font-size: 14px;
+  color: #4CAF50;
+  background: rgba(255,255,255,0.1);
+  padding: 4px 14px;
+  border-radius: 20px;
+}
+
+/* 角色卡片网格 */
+#role-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.role-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(255,255,255,0.08);
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  text-align: left;
+  transition: all 0.2s;
+}
+.role-card:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: #4CAF50;
+}
+.role-card.active {
+  border-color: #4CAF50;
+  background: rgba(76,175,80,0.2);
+}
+
+.role-card.locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+  grid-column: 1 / -1;
+}
+
+.role-card-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.role-card-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.role-card-name {
+  font-size: 13px;
+  font-weight: bold;
+}
+.role-card-tag {
+  font-size: 10px;
+  color: #aaa;
+}
+.role-card-check {
+  font-size: 16px;
+  color: #4CAF50;
+  opacity: 0;
+  flex-shrink: 0;
+}
+.role-card.active .role-card-check {
+  opacity: 1;
+}
+
+.role-card-lock-icon {
+  font-size: 22px;
+  padding: 6px;
+}
+.role-card-hint {
+  font-size: 10px;
+  color: #FF9800;
+  line-height: 1.3;
+}
+
+/* 操作按钮 */
+#pause-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+#pause-actions button {
+  flex: 1;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-family: 'Courier New', monospace;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+#continue-btn {
+  background: #4CAF50;
+  color: #fff;
+  border-color: #388E3C;
+}
+#continue-btn:hover { background: #66BB6A; }
+#pause-reset-btn {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  border-color: #555;
+}
+#pause-reset-btn:hover { background: rgba(255,255,255,0.2); }
+
+/* 音量控制 */
+#pause-volume {
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  color: #aaa;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+#pause-volume input[type="range"] {
+  width: 80px;
+  cursor: pointer;
+}
+
+/* 暂停右侧角色预览 */
+#pause-preview-container {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2/3;
+  max-height: 100%;
+  border: 2px solid #4CAF50;
+  overflow: hidden;
+  background: #87CEEB;
+}
+
+
+/* ===== 技能栏 ===== */
+#skill-bar {
+  position: fixed;
+  bottom: 92px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 50;
+  pointer-events: none;
+}
+
+#skill-slots {
+  display: flex;
+  gap: 4px;
+}
+
+.skill-slot {
+  width: 40px;
+  height: 40px;
+  background: rgba(0,0,0,0.6);
+  border: 2px solid #555;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #ccc;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.skill-slot.active {
+  border-color: #FFD700;
+  background: rgba(255,215,0,0.15);
+  color: #FFD700;
+  box-shadow: 0 0 8px rgba(255,215,0,0.3);
+}
+
+.skill-name-display {
+  color: #FFD700;
+  font-size: 12px;
+  text-shadow: 0 0 3px #000;
+  background: rgba(0,0,0,0.4);
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.skill-slot.cooldown {
+  position: relative;
+  opacity: 0.55;
+}
+.skill-slot.cooldown::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.45);
+  border-radius: 2px;
+  pointer-events: none;
+}
+.skill-cooldown-text {
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  color: #FFD700;
+  text-shadow: 0 0 3px #000, 0 0 3px #000;
+  pointer-events: none;
+  z-index: 1;
+}
+.skill-hints {
+  font-size: 9px;
+  color: #888;
+  text-shadow: 0 0 2px #000;
+  white-space: nowrap;
+}
+
+/* ===== 关卡信息 ===== */
+#level-info {
+  position: fixed;
+  top: 42px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  pointer-events: none;
+  display: flex;
+  gap: 10px;
+  font-size: 13px;
+  color: #fff;
+  text-shadow: 0 0 3px #000;
+  background: rgba(0,0,0,0.4);
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+
+#level-tasks {
+  color: #aaa;
+  font-size: 12px;
+}
+
+/* ===== 浮动伤害数字 ===== */
+.damage-number {
+  position: fixed;
+  font-family: 'Courier New', monospace;
+  font-size: 18px;
+  font-weight: bold;
+  color: #FF4444;
+  text-shadow: 0 0 4px #000, 0 0 8px rgba(255,0,0,0.5);
+  pointer-events: none;
+  z-index: 1000;
+  animation: damageFloat 1s ease-out forwards;
+  transform: translate(-50%, -50%);
+}
+.damage-number.player-damage {
+  color: #FF8800;
+  font-size: 22px;
+  text-shadow: 0 0 4px #000, 0 0 8px rgba(255,136,0,0.5);
+}
+
+@keyframes damageFloat {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(-40px);
+  }
+}
+
+/* ===== AI 半自动模式建议 ===== */
+#ai-suggestion {
+  position: fixed;
+  bottom: 140px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  pointer-events: none;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid #FFD700;
+  color: #FFD700;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  text-shadow: 0 0 3px #000;
+  animation: suggestionPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes suggestionPulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* ===== 关卡选择界面 ===== */
+#level-select-screen {
+  width: 100%; height: 100%;
+}
+#level-select-screen h1 {
+  font-size: 32px;
+  margin-bottom: 16px;
+}
+
+#level-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  max-width: 480px;
+  margin-bottom: 16px;
+}
+
+.level-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 12px;
+  background: rgba(255,255,255,0.08);
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  text-align: left;
+  transition: all 0.2s;
+  width: 100%;
+}
+.level-card:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: #4CAF50;
+}
+.level-card.current {
+  border-color: #FFD700;
+  background: rgba(255,215,0,0.1);
+}
+.level-card.completed {
+  border-color: #4CAF50;
+}
+.level-card.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.level-card.locked:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.2);
+}
+
+.level-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 4px;
+}
+.level-card-name {
+  font-size: 14px;
+  font-weight: bold;
+}
+.level-card-status-check {
+  margin-left: auto;
+  color: #4CAF50;
+  font-size: 16px;
+}
+.level-card-status-lock {
+  margin-left: auto;
+  font-size: 16px;
+}
+.level-card-desc {
+  font-size: 11px;
+  color: #aaa;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+.level-card-progress {
+  font-size: 11px;
+  color: #ccc;
+}
+
+#level-select-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+#level-select-actions button {
+  padding: 10px 32px;
+  font-size: 14px;
+  font-family: 'Courier New', monospace;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  border: 2px solid #555;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+#level-select-actions button:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* ===== 关卡通关通知 ===== */
+#level-complete-notification {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+#level-complete-content {
+  background: rgba(30,30,30,0.95);
+  border: 2px solid #4CAF50;
+  border-radius: 12px;
+  padding: 30px;
+  text-align: center;
+  color: #fff;
+  min-width: 320px;
+  max-width: 450px;
+}
+
+#level-complete-content h2 {
+  font-size: 28px;
+  color: #4CAF50;
+  margin-bottom: 12px;
+}
+
+#level-complete-msg {
+  font-size: 14px;
+  color: #ccc;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+#level-complete-rewards {
+  margin-bottom: 16px;
+  color: #FFD700;
+  font-size: 13px;
+}
+
+#level-complete-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+#level-complete-actions button {
+  padding: 10px 24px;
+  font-size: 14px;
+  font-family: 'Courier New', monospace;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+#level-complete-select-btn {
+  background: #4CAF50;
+  color: #fff;
+  border: 2px solid #388E3C;
+}
+#level-complete-select-btn:hover {
+  background: #66BB6A;
+}
+
+#level-complete-close-btn {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  border: 2px solid #555;
+}
+#level-complete-close-btn:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* New ore block previews */
+.block-preview.coal_ore    { background: #2C2C2C; }
+.block-preview.iron_ore    { background: #D4A574; }
+.block-preview.gold_ore    { background: #FFD700; }
+.block-preview.diamond_ore { background: #2BD2E8; }
+.block-preview.redstone_ore { background: #CC0000; }
+.block-preview.lapis_ore   { background: #1E3A8F; }
+.block-preview.sand        { background: #E8D5A3; }
+.block-preview.gravel      { background: #9E9E9E; }
+.block-preview.snow        { background: #FFFFFF; }
+.block-preview.cactus      { background: #2E7D32; }
+
+/* Tool item previews */
+.item-preview.coal           { background: #2C2C2C; }
+.item-preview.sand_item      { background: #E8D5A3; }
+.item-preview.gravel_item    { background: #9E9E9E; }
+.item-preview.snow_item      { background: #FFFFFF; }
+.item-preview.cactus_item    { background: #2E7D32; }
+.item-preview.pickaxe_wood   { background: #8D6E63; }
+.item-preview.pickaxe_stone  { background: #9E9E9E; }
+.item-preview.pickaxe_iron   { background: #C0C0C0; }
+.item-preview.pickaxe_diamond { background: #2BD2E8; }
+.item-preview.axe_wood       { background: #8D6E63; }
+.item-preview.axe_stone      { background: #9E9E9E; }
+.item-preview.axe_iron       { background: #C0C0C0; }
+.item-preview.axe_diamond    { background: #2BD2E8; }
+.item-preview.shovel_wood    { background: #8D6E63; }
+.item-preview.shovel_stone   { background: #9E9E9E; }
+.item-preview.shovel_iron    { background: #C0C0C0; }
+.item-preview.shovel_diamond { background: #2BD2E8; }
+
+
+/* ===== Armor slots in inventory ===== */
+.armor-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+}
+.armor-slot {
+  width: 40px;
+  height: 40px;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid #555;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-size: 9px;
+  color: #888;
+}
+.armor-slot:hover {
+  border-color: #fff;
+}
+.armor-slot.has-item {
+  border-color: #FFD700;
+}
+.armor-defense-display {
+  font-size: 11px;
+  color: #aaa;
+  text-align: center;
+  margin-top: 4px;
+}
+#armor-defense-value {
+  color: #FFD700;
+}
+
+/* ===== New combat items ===== */
+.item-preview.bow              { background: #8B4513; }
+.item-preview.arrow            { background: #A0A0A0; }
+.item-preview.leather_helmet   { background: #C4956A; }
+.item-preview.iron_helmet      { background: #C0C0C0; }
+.item-preview.diamond_helmet   { background: #2BD2E8; }
+.item-preview.netherite_helmet { background: #4A0E4E; }
+.item-preview.leather_chestplate   { background: #C4956A; }
+.item-preview.iron_chestplate      { background: #C0C0C0; }
+.item-preview.diamond_chestplate_new { background: #2BD2E8; }
+.item-preview.netherite_chestplate { background: #4A0E4E; }
+.item-preview.leather_leggings   { background: #C4956A; }
+.item-preview.iron_leggings      { background: #C0C0C0; }
+.item-preview.diamond_leggings   { background: #2BD2E8; }
+.item-preview.netherite_leggings { background: #4A0E4E; }
+.item-preview.leather_boots   { background: #C4956A; }
+.item-preview.iron_boots      { background: #C0C0C0; }
+.item-preview.diamond_boots   { background: #2BD2E8; }
+.item-preview.netherite_boots { background: #4A0E4E; }
+
+/* ===== Blocking shield glow ===== */
+#block-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 45;
+  border: 8px solid transparent;
+  border-image: none;
+  transition: border-color 0.1s;
+}
+#block-overlay.active {
+  border-color: rgba(30, 144, 255, 0.5);
+  box-shadow: inset 0 0 60px rgba(30, 144, 255, 0.2);
+}
+
+/* ===== Bow charge indicator ===== */
+#bow-charge-container {
+  position: fixed;
+  bottom: 170px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  pointer-events: none;
+  display: none;
+}
+#bow-charge-bar {
+  width: 80px;
+  height: 6px;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+#bow-charge-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #FFD700, #FF4500);
+  transition: width 0.05s;
+}
+#bow-charge-label {
+  text-align: center;
+  font-size: 9px;
+  color: #ccc;
+  margin-top: 2px;
+  text-shadow: 0 0 2px #000;
+}
+
+/* ===== Armor bar ===== */
+#armor-bar {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+.armor-icon {
+  font-size: 12px;
+}
+
+/* ===== Responsive: Tablet < 768px ===== */
+@media (max-width: 768px) {
+  #hotbar { bottom: 12px; }
+  .hotbar-slot { width: 44px; height: 52px; }
+  #skill-bar { bottom: 74px; }
+  .skill-slot { width: 32px; height: 32px; font-size: 10px; }
+  #help-panel { width: 220px; padding: 10px; }
+  .help-row { font-size: 10px; line-height: 20px; }
+  #start-screen, #pause-screen { max-width: 500px; }
+  .pause-content { grid-template-columns: 1fr; }
+  .start-content { flex-direction: column; align-items: center; max-width: 400px; }
+  .start-left { display: none; }
+  #start-screen h1 { font-size: 36px; }
+}
+
+/* ===== Responsive: Phone < 480px ===== */
+@media (max-width: 480px) {
+  #hotbar { bottom: 80px; gap: 2px; }
+  .hotbar-slot { width: 36px; height: 44px; }
+  .slot-key { font-size: 8px; }
+  .slot-name { font-size: 7px; }
+  .block-preview { width: 20px; height: 20px; }
+  #skill-bar { bottom: 60px; }
+  .skill-slot { width: 28px; height: 28px; font-size: 9px; }
+  #help-panel { width: 180px; padding: 8px 10px; }
+  .help-row { font-size: 9px; gap: 6px; line-height: 18px; }
+  .help-key { min-width: 50px; }
+  #start-screen, #pause-screen { max-width: 100%; padding: 16px; }
+  .start-content { flex-direction: column; align-items: center; max-width: 100%; }
+  .start-left { display: none; }
+  #start-screen h1 { font-size: 28px; }
+  #start-btn { padding: 10px 32px; font-size: 16px; }
+  .start-controls { font-size: 11px; }
+  #debug-info { font-size: 10px; }
+  #top-info { gap: 8px; }
+  .top-info-item { font-size: 11px; padding: 2px 6px; }
+  #level-info { font-size: 11px; padding: 2px 8px; top: 36px; }
+  #crosshair { font-size: 22px; }
+  #typing-display { font-size: 13px; bottom: 8px; left: 8px; padding: 6px 10px; }
+
+  /* Task 2.1: Start/pause screen overflow */
+  #start-screen, #pause-screen {
+    overflow-y: auto;
+    max-height: 100vh;
+  }
+
+  /* Task 2.2: Role cards 1 column */
+  #role-cards {
+    grid-template-columns: 1fr;
+  }
+
+  /* Task 2.3: Pause screen smaller padding */
+  .pause-content {
+    gap: 8px;
+  }
+  .pause-left {
+    gap: 8px;
+  }
+  #pause-actions button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  /* Task 3.1: Storage grid 3 columns, 32px slots */
+  .storage-grid {
+    grid-template-columns: repeat(3, 32px);
+  }
+  .inv-slot {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* Task 5.3: Single column layout on mobile */
+  .inventory-layout {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .armor-slots {
+    flex-direction: row;
+    gap: 6px;
+  }
+  .armor-slot {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* Task 3.2: Inventory container tighter */
+  .inventory-container {
+    padding: 10px;
+  }
+  .inventory-container h2 {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+
+  /* Task 3.4: Crafting smaller */
+  .crafting-grid {
+    grid-template-columns: 32px 32px;
+    grid-template-rows: 32px 32px;
+  }
+  .craft-section h3 {
+    font-size: 12px;
+  }
+
+  /* Task 3.5: Make inventory scrollable */
+  #inventory-overlay {
+    overflow-y: auto;
+    align-items: flex-start;
+    padding-top: 10px;
+  }
+
+  /* Task 4.1: Hide pause right panel on mobile */
+  .pause-right {
+    display: none;
+  }
+
+  /* Task 4.2: Smaller pause title */
+  #pause-screen h1 {
+    font-size: 24px;
+  }
+}
+
+/* ===== Chest Overlay ===== */
+#chest-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 90;
+}
+
+.chest-container {
+  background: rgba(30,30,30,0.95);
+  border: 2px solid #8D6E63;
+  border-radius: 8px;
+  padding: 20px;
+  color: #fff;
+  min-width: 420px;
+  text-align: center;
+}
+
+.chest-container h2 {
+  text-align: center;
+  margin-bottom: 15px;
+  color: #8D6E63;
+}
+
+.chest-grid {
+  display: grid;
+  grid-template-columns: repeat(9, 44px);
+  gap: 2px;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.chest-slot {
+  width: 40px;
+  height: 40px;
+  background: #444;
+  border: 1px solid #555;
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #fff;
+  overflow: hidden;
+  position: relative;
+}
+
+.chest-slot:hover {
+  background: #555;
+  border-color: #8D6E63;
+}
+
+.chest-item-name {
+  font-size: 8px;
+  line-height: 1.1;
+  text-align: center;
+  word-break: break-all;
+}
+
+.chest-item-count {
+  font-size: 10px;
+  color: #aaa;
+  position: absolute;
+  bottom: 2px;
+  right: 3px;
+}
+
+#chest-close-btn {
+  padding: 6px 20px;
+  background: #555;
+  color: #fff;
+  border: 1px solid #777;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+#chest-close-btn:hover {
+  background: #8D6E63;
+}
