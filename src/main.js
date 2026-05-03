@@ -436,11 +436,17 @@ class Game {
     this._craftGrid = [null, null, null, null];
     craftSlots.forEach((el, i) => {
       el.addEventListener('click', () => {
-        if (this._craftGrid[i]) {
-          // Return to inventory
-          const item = this._craftGrid[i];
-          this.inventory.addItem(item.type, item.count);
-          this._craftGrid[i] = null;
+        const existing = this._craftGrid[i];
+        if (existing) {
+          // Try to add 1 more of the same type from inventory
+          if (this.inventory.hasItem(existing.type, 1)) {
+            existing.count += 1;
+            this.inventory.removeItem(existing.type, 1);
+          } else {
+            // No more of this type — return whole stack to inventory
+            this.inventory.addItem(existing.type, existing.count);
+            this._craftGrid[i] = null;
+          }
         } else {
           // Take from selected hotbar slot
           const selected = this.inventory.getSelectedItem();
@@ -451,6 +457,7 @@ class Game {
         }
         this._updateCraftResult();
         this._updateInventoryUI();
+        this._updateCraftSlots();
       });
     });
 
@@ -463,7 +470,12 @@ class Game {
           consumeCraftInput(this._craftGrid);
           this._updateCraftResult();
           this._updateInventoryUI();
+          this._updateCraftSlots();
           this.audioManager.playSFX('craft');
+        } else {
+          // Inventory full — brief visual feedback
+          resultSlot.style.borderColor = '#FF4444';
+          setTimeout(() => { resultSlot.style.borderColor = '#FFD700'; }, 300);
         }
       }
     });
@@ -650,6 +662,13 @@ class Game {
     }
   }
 
+  _updateCraftSlots() {
+    const craftSlots = document.querySelectorAll('#crafting-grid .craft-slot');
+    craftSlots.forEach((el, i) => {
+      this._setSlotDisplay(el, this._craftGrid[i] || null);
+    });
+  }
+
   setUIState(newState) {
     const prevState = this.uiState;
     this.uiState = newState;
@@ -702,6 +721,7 @@ class Game {
         }
       }
       this._updateCraftResult();
+      this._updateCraftSlots();
     } else if (this.uiState === 'gameplay') {
       // Open inventory
       this.setUIState('inventory');
@@ -709,6 +729,7 @@ class Game {
       // Hide touch controls when inventory is open
       if (this.touchController) this.touchController.hide();
       this._updateInventoryUI();
+      this._updateCraftSlots();
     }
   }
 
@@ -925,23 +946,39 @@ class Game {
     // Sanity check — source slot must still have the item
     if (!currentItem || currentItem.type !== item.type) return;
 
-    // If craft slot already has an item, return it to inventory
-    if (this._craftGrid[craftIndex]) {
-      this.inventory.addItem(this._craftGrid[craftIndex].type, this._craftGrid[craftIndex].count);
-    }
-
-    // Remove 1 from source item stack
-    if (currentItem.count > 1) {
-      currentItem.count -= 1;
+    const existing = this._craftGrid[craftIndex];
+    if (existing) {
+      if (existing.type === item.type) {
+        // Same type — stack: place 1 more onto existing
+        existing.count += 1;
+        if (currentItem.count > 1) {
+          currentItem.count -= 1;
+        } else {
+          sourceArray[sourceIndex] = null;
+        }
+      } else {
+        // Different type — swap: return existing, place new
+        this.inventory.addItem(existing.type, existing.count);
+        if (currentItem.count > 1) {
+          currentItem.count -= 1;
+        } else {
+          sourceArray[sourceIndex] = null;
+        }
+        this._craftGrid[craftIndex] = { type: item.type, count: 1 };
+      }
     } else {
-      sourceArray[sourceIndex] = null;
+      // Empty slot — place 1 item
+      if (currentItem.count > 1) {
+        currentItem.count -= 1;
+      } else {
+        sourceArray[sourceIndex] = null;
+      }
+      this._craftGrid[craftIndex] = { type: item.type, count: 1 };
     }
-
-    // Place 1 item in crafting grid
-    this._craftGrid[craftIndex] = { type: item.type, count: 1 };
 
     this._updateCraftResult();
     this._updateInventoryUI();
+    this._updateCraftSlots();
   }
 
   _cycleWeapon() {
@@ -1814,6 +1851,7 @@ class Game {
         }
       }
       this._updateCraftResult();
+      this._updateCraftSlots();
     }
     this.input.requestLock();
     if (!this.running) {
@@ -1826,7 +1864,7 @@ class Game {
     // Show touch controls when resuming
     if (this.touchController) this.touchController.show();
 	      // Lock to landscape on mobile
-	      try { screen.orientation.lock('landscape'); } catch (e) {}
+	      screen.orientation?.lock?.('landscape')?.catch(() => {})
       this.hud.setTouchMode(true);
   }
 
