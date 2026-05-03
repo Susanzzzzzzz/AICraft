@@ -1,5 +1,5 @@
 // L1 Unit Test: Crafting module
-import { getCraftResult, consumeCraftInput } from '../../crafting.js';
+import { getCraftResult, consumeCraftInput } from '../../src/crafting.js';
 
 const ITEM = {
   GRASS: 1, DIRT: 2, STONE: 3, WOOD: 4,

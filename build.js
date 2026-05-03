@@ -6,8 +6,8 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = resolve(__dirname, 'dist');
 const INDEX = resolve(__dirname, 'index.html');
-const MAIN = resolve(__dirname, 'main.js');
-const CSS = resolve(__dirname, 'style.css');
+const MAIN = resolve(__dirname, 'src', 'main.js');
+const CSS = resolve(__dirname, 'src', 'style.css');
 const START_IMG = 'WechatIMG282.jpeg';
 
 async function build() {
@@ -32,8 +32,8 @@ async function build() {
   }
 
   let html = readFileSync(INDEX, 'utf8')
-    .replace('<link rel="stylesheet" href="style.css">', '')
-    .replace(/<script type="module" src="main\.js"><\/script>/, '')
+    .replace('<link rel="stylesheet" href="src/style.css">', '')
+    .replace(/<script type="module" src="src\/main\.js"><\/script>/, '')
     .replace(/<script type="importmap">[\s\S]*?<\/script>/, '')
     .replace('</head>', `<style>${cssCode}</style>\n</head>`)
     .replace('</body>', `<script>\n${jsCode}\n</script>\n</body>`);

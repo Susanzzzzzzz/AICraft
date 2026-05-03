@@ -136,16 +136,20 @@ open dist/AICraft.html
 
 ```
 ├── index.html                 # Entry page
-├── main.js                    # Game main loop & core logic
-├── world.js                   # World data & generation
-├── renderer.js                # Three.js rendering management
-├── player.js                  # Player physics & collision
-├── camera.js                  # Camera control
-├── input.js                   # Keyboard/mouse input
-├── touch-controller.js        # Mobile touch control
-├── hud.js                     # HUD interface
-├── style.css                  # Styles
 ├── build.js                   # Build script
+├── src/                       # Source code
+│   ├── main.js                # Game main loop & core logic
+│   ├── world.js               # World data & generation
+│   ├── renderer.js            # Three.js rendering management
+│   ├── player.js              # Player physics & collision
+│   ├── camera.js              # Camera control
+│   ├── input.js               # Keyboard/mouse input
+│   ├── touch-controller.js    # Mobile touch control
+│   ├── hud.js                 # HUD interface
+│   ├── crafting.js            # Crafting system
+│   ├── inventory.js           # Inventory management
+│   ├── style.css              # Styles
+│   └── ...                    # Other modules
 ├── dist/AICraft.html        # Build output (single file)
 ├── docs/
 │   ├── 操作手册.md            # Game manual

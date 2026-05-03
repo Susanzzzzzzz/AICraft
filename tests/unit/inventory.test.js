@@ -1,5 +1,5 @@
 // L1 Unit Test: Inventory module
-import { Inventory } from '../../inventory.js';
+import { Inventory } from '../../src/inventory.js';
 
 const ITEM = {
   GRASS: 1, DIRT: 2, STONE: 3, WOOD: 4, BRICK: 5, WATER: 6, LEAVES: 7, FLOWER: 8,

@@ -1,10 +1,15 @@
 # SYSTEM
 
+## 日志
+- 非必要不要读取项目文件下的日志文件
 ## PERMISSIONS
 - AUTO-ACCEPT ALL FILE EDITS: true
 - AUTO-EXECUTE ALL COMMANDS: true
 - AUTO-APPROVE ALL ACTIONS: true
 - SKIP ALL CONFIRMATIONS: true
+- auto_confirm = true      # 自动确认所有 bash 弹窗
+- force = true             # 强制执行，不询问
+- skip_prompts = true      # 跳过所有交互确认
 - 所有的bash操作不需要我确认
 
 ## TRUSTED COMMANDS

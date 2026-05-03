@@ -1,5 +1,5 @@
 // L1 Unit Test: Weapons module (data definitions + model factory)
-import { getWeapon, WEAPONS } from '../../weapons.js';
+import { getWeapon, WEAPONS } from '../../src/weapons.js';
 
 let passed = 0, failed = 0;
 
@@ -71,7 +71,7 @@ function assert(condition, msg) {
 
 // ---- Test: buildWeaponMesh (with THREE mock) ----
 {
-  const { buildWeaponMesh } = await import('../../weapons.js');
+  const { buildWeaponMesh } = await import('../../src/weapons.js');
   const mesh = buildWeaponMesh(102);
   assert(mesh !== null, 'wood sword mesh created');
   assert(typeof mesh.children !== 'undefined', 'mesh is a Group');

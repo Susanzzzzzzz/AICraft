@@ -1,5 +1,5 @@
 // L1 Unit Test: Raycast module (DDA algorithm)
-import { raycast } from '../../raycast.js';
+import { raycast } from '../../src/raycast.js';
 
 let passed = 0, failed = 0;
 

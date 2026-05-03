@@ -1,6 +1,6 @@
 // L2 Unit Test: Player module (physics, flight, fall damage)
-import { Player } from '../../player.js';
-import { BLOCK } from '../../world.js';
+import { Player } from '../../src/player.js';
+import { BLOCK } from '../../src/world.js';
 
 const GRAVITY = -25;
 const FLIGHT_SPEED = 8;

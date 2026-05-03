@@ -4,6 +4,9 @@
  * 独立模块，不导入任何外部依赖
  */
 
+const ACTION_ASCEND = 'ascend';
+const ACTION_DESCEND = 'descend';
+
 export class TouchController {
   constructor(input) {
     this.input = input;
@@ -460,8 +463,8 @@ export class TouchController {
       { label: '切换', action: 'skillCycleExplore' },
       { label: '武器', action: 'weaponSwitch' },
       { label: '飞行', action: 'flight' },
-      { label: '↑', action: 'ascend' },
-      { label: '↓', action: 'descend' },
+      { label: '↑', action: ACTION_ASCEND },
+      { label: '↓', action: ACTION_DESCEND },
       { label: '视角', action: 'toggleCamera' },
       { label: '帮助', action: 'help' },
     ];
@@ -617,11 +620,11 @@ export class TouchController {
         this.input._actions.push('flight');
         break;
 
-      case 'ascend':
+      case ACTION_ASCEND:
         this.input.keys['Space'] = true;
         break;
 
-      case 'descend':
+      case ACTION_DESCEND:
         this.input.keys['ShiftLeft'] = true;
         break;
 
@@ -657,11 +660,11 @@ export class TouchController {
         this.input.mouseButtons[2] = false;
         break;
 
-      case 'ascend':
+      case ACTION_ASCEND:
         this.input.keys['Space'] = false;
         break;
 
-      case 'descend':
+      case ACTION_DESCEND:
         this.input.keys['ShiftLeft'] = false;
         break;
 

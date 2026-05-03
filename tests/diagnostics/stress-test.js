@@ -2,7 +2,7 @@
 // 在 Node.js 环境下独立运行，无需浏览器/Three.js
 // 用法: node tests/diagnostics/stress-test.js
 
-import { World, BLOCK, WORLD_WIDTH, WORLD_HEIGHT, WORLD_DEPTH } from '../../world.js';
+import { World, BLOCK, WORLD_WIDTH, WORLD_HEIGHT, WORLD_DEPTH } from '../../src/world.js';
 import { writeFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
