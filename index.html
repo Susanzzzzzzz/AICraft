@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>AICraft — 方块世界</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="src/style.css">
 <script type="importmap">
 {
   "imports": {
@@ -236,6 +236,7 @@
     <div id="inventory-overlay" class="hidden">
       <div class="inventory-container">
         <h2>背包</h2>
+        <button id="inventory-close-btn" class="inventory-close-btn">×</button>
         <div class="inventory-layout">
           <!-- Left: storage + hotbar -->
           <div class="inventory-left">
@@ -272,6 +273,10 @@
           <label>BGM: <input type="range" id="bgm-volume" min="0" max="1" step="0.1" value="0.5"></label>
           <label>SFX: <input type="range" id="sfx-volume" min="0" max="1" step="0.1" value="0.8"></label>
         </div>
+        <div class="recipe-panel">
+          <h3 class="recipe-panel-toggle" id="recipe-panel-toggle">合成公式 <span class="recipe-arrow">▶</span></h3>
+          <div class="recipe-panel-content" id="recipe-panel-content"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -303,6 +308,6 @@
     }
   });
   </script>
-  <script type="module" src="main.js"></script>
+  <script type="module" src="src/main.js"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 // AICraft — Main game entry point
 import * as THREE from 'three';
-import { World, BLOCK, ITEM, ITEM_NAMES, WORLD_WIDTH, WORLD_HEIGHT, WORLD_DEPTH, BLOCK_COLORS, MAX_BLOCK_TYPE } from './world.js';
+import { World, BLOCK, ITEM, ITEM_NAMES, WORLD_WIDTH, WORLD_HEIGHT, WORLD_DEPTH, BLOCK_COLORS, MAX_BLOCK_TYPE, getBlockDrop } from './world.js';
 import { Renderer } from './renderer.js';
 import { Player } from './player.js';
 import { Input, parseCommand } from './input.js';
@@ -13,7 +13,7 @@ import { SkinManager } from './skin.js';
 import { PassiveAnimal, Pig, Cow, Sheep, Chicken, Slime } from './animals.js';
 import { CharacterPreview } from './character-preview.js';
 import { Inventory } from './inventory.js';
-import { getCraftResult, consumeCraftInput } from './crafting.js';
+import { getCraftResult, consumeCraftInput, RECIPES } from './crafting.js';
 import { getWeapon, getToolSpeed } from './weapons.js';
 import { AudioManager } from './audio.js';
 import { ROLES, getRole, getAvailableRoles, getUnlockedRoles } from './role.js';
@@ -109,6 +109,9 @@ class Game {
     // Footstep SFX timer
     this._footstepTimer = 0;
 
+    // Auto-mine repeat timer (for held left-click)
+    this._autoMineTimer = 0;
+
     // Diagnostics (F3 toggle)
     this.diagnostics = new Diagnostics(this);
   }
@@ -160,7 +163,7 @@ class Game {
       this.touchController.init();
       this.touchController.show();
 	      // Lock to landscape on mobile (Promise-based API，需 .catch 否则触发 unhandledrejection)
-	      screen.orientation.lock('landscape').catch(() => {});
+	      screen.orientation?.lock?.('landscape')?.catch(() => {});
       this.hud.setTouchMode(true);
     }
 
@@ -251,14 +254,26 @@ class Game {
   }
 
   _initInventory() {
-    // Minimal starting gear: wooden sword, wood, planks, dirt
+    // Starting gear: basic tools, weapons, armor
     this.inventory.addItem(ITEM.SWORD_WOOD, 1);
+    this.inventory.addItem(ITEM.SWORD_STONE, 1);
+    this.inventory.addItem(ITEM.SWORD_DIAMOND, 1);
+    this.inventory.addItem(ITEM.BOW, 1);
+    this.inventory.addItem(ITEM.ARROW, 16);
     this.inventory.addItem(ITEM.WOOD, 8);
     this.inventory.addItem(ITEM.PLANK, 8);
     this.inventory.addItem(ITEM.DIRT, 4);
-    this.inventory.addItem(ITEM.BOW, 1);
-    this.inventory.addItem(ITEM.ARROW, 8);
     this.inventory.addItem(ITEM.IRON_INGOT, 16);
+    // Add armor set
+    this.inventory.addItem(ITEM.IRON_HELMET, 1);
+    this.inventory.addItem(ITEM.IRON_CHESTPLATE, 1);
+    this.inventory.addItem(ITEM.IRON_LEGGINGS, 1);
+    this.inventory.addItem(ITEM.IRON_BOOTS, 1);
+    // Auto-equip armor
+    this.inventory.equipArmor(ITEM.IRON_HELMET);
+    this.inventory.equipArmor(ITEM.IRON_CHESTPLATE);
+    this.inventory.equipArmor(ITEM.IRON_LEGGINGS);
+    this.inventory.equipArmor(ITEM.IRON_BOOTS);
   }
 
   _initSkillSystem() {
@@ -360,6 +375,26 @@ class Game {
     if (chestCloseBtn) {
       chestCloseBtn.addEventListener('click', () => {
         this._closeChest();
+      });
+    }
+
+    // Inventory close button
+    const invCloseBtn = document.getElementById('inventory-close-btn');
+    if (invCloseBtn) {
+      invCloseBtn.addEventListener('click', () => {
+        this._toggleInventory();
+      });
+    }
+
+    // Recipe panel toggle
+    const recipeToggle = document.getElementById('recipe-panel-toggle');
+    if (recipeToggle) {
+      recipeToggle.addEventListener('click', () => {
+        recipeToggle.classList.toggle('open');
+        document.getElementById('recipe-panel-content').classList.toggle('open');
+        if (recipeToggle.classList.contains('open')) {
+          this._updateRecipePanel();
+        }
       });
     }
 
@@ -730,6 +765,25 @@ class Game {
       if (this.touchController) this.touchController.hide();
       this._updateInventoryUI();
       this._updateCraftSlots();
+    }
+  }
+
+  _updateRecipePanel() {
+    const container = document.getElementById('recipe-panel-content');
+    if (!container) return;
+    container.innerHTML = '';
+    for (const recipe of RECIPES) {
+      const entry = document.createElement('div');
+      entry.className = 'recipe-entry';
+      // Build input names
+      const inputNames = recipe.inputs.map(inp => {
+        const name = ITEM_NAMES[inp.type] || ('#' + inp.type);
+        return inp.count > 1 ? `${name}×${inp.count}` : name;
+      }).join(' + ');
+      const outputName = ITEM_NAMES[recipe.output.type] || ('#' + recipe.output.type);
+      const outputCount = recipe.output.count > 1 ? `${outputName}×${recipe.output.count}` : outputName;
+      entry.innerHTML = `<span class="recipe-inputs">${inputNames}</span><span class="recipe-arrow-icon">→</span><span class="recipe-output">${outputCount}</span>`;
+      container.appendChild(entry);
     }
   }
 
@@ -1560,6 +1614,17 @@ class Game {
     }
 
     // Handle attack (left-click entity detection, prioritized over block breaking)
+    // Auto-repeat break/attack when left mouse is held (desktop continuous mining)
+    if (this.input.mouseButtons[0] && !this._bowCharging && this.uiState === "gameplay") {
+      this._autoMineTimer += dt;
+      if (this._autoMineTimer >= 0.15) {
+        this._autoMineTimer = 0;
+        this.input._actions.push("break");
+        this.input._actions.push("attack");
+      }
+    } else {
+      this._autoMineTimer = 0;
+    }
     // --- Skip attack/break when charging bow ---
     if (!this._bowCharging) {
     this._attackCooldownTimer -= dt;
@@ -1609,7 +1674,7 @@ class Game {
                 this.world.removeChest(bx, by, bz);
               }
               this.world.setBlock(bx, by, bz, BLOCK.AIR);
-              this.inventory.addItem(blockType, 1);
+              this.inventory.addItem(getBlockDrop(blockType), 1);
               this.audioManager.playSFX('break');
             });
             // Spawn destruction particles at the broken block position
@@ -2117,6 +2182,9 @@ class Game {
     this.setUIState('gameplay');
     this.lastTime = performance.now();
     requestAnimationFrame((t) => this.gameLoop(t));
+
+    // Restore touch controls on mobile
+    if (this.touchController) this.touchController.show();
   }
 
   _isLevelUnlocked(index) {
@@ -2142,6 +2210,7 @@ class Game {
       this.setUIState('gameplay');
       this.lastTime = performance.now();
       requestAnimationFrame((t) => this.gameLoop(t));
+      if (this.touchController) this.touchController.show();
     } else {
       // Came from pause — return to pause screen
       document.getElementById('pause-screen').classList.remove('hidden');
@@ -2274,6 +2343,24 @@ class Game {
 
     // Reset camera pitch
     this.cameraCtrl.resetPitch();
+
+    // Clear nearby hostiles and slimes for safe spawn zone
+    const safeRadius = 10;
+    const px = this.player.position[0], pz = this.player.position[2];
+    const filterByDistance = (mobs) => mobs.filter(m => {
+      const dx = m.position[0] - px, dz = m.position[2] - pz;
+      return (dx * dx + dz * dz) < safeRadius * safeRadius;
+    });
+    const nearHostiles = filterByDistance(this.hostiles);
+    for (const mob of nearHostiles) {
+      this.renderer.scene.remove(mob.group);
+      mob.dead = true;
+    }
+    const nearSlimes = filterByDistance(this.slimes);
+    for (const mob of nearSlimes) {
+      this.renderer.scene.remove(mob.group);
+      mob.dead = true;
+    }
   }
 
   // ===== Combat System =====

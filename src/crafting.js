@@ -137,6 +137,7 @@ function matchesPositional(grid, recipe) {
   return true;
 }
 
+export { RECIPES };
 export function getCraftResult(grid) {
   const recipe = matchRecipe(grid);
   return recipe ? recipe.output : null;

@@ -43,7 +43,7 @@ export class DropItem {
       const dx = this.position[0] - playerPos[0];
       const dy = this.position[1] - playerPos[1];
       const dz = this.position[2] - playerPos[2];
-      if (Math.sqrt(dx*dx + dy*dy + dz*dz) < 1.5) this.collected = true;
+      if (Math.sqrt(dx*dx + dy*dy + dz*dz) < 2.5) this.collected = true;
     }
   }
 

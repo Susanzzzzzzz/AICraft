@@ -43,9 +43,13 @@ export const BLOCK = {
   CACTUS: 22,
   CHEST: 23,
   TORCH: 24,
+  // New block types
+  GRANITE: 25,
+  DIORITE: 26,
+  ANDESITE: 27,
 };
 
-export const MAX_BLOCK_TYPE = 24;
+export const MAX_BLOCK_TYPE = 27;
 
 export const BLOCK_NAMES = [
   'Air', '草方块', '泥土', '石头', '木头', '砖块', '水', '树叶', '花',
@@ -79,6 +83,9 @@ export const BLOCK_COLORS = {
   [BLOCK.CACTUS]: 0x2E7D32,
   [BLOCK.CHEST]: 0x8D6E63,
   [BLOCK.TORCH]: 0xFF8800,
+  [BLOCK.GRANITE]: 0xCC8866,
+  [BLOCK.DIORITE]: 0xDDDDDD,
+  [BLOCK.ANDESITE]: 0x888888,
 };
 
 export const BLOCK_OPACITY = {
@@ -87,7 +94,7 @@ export const BLOCK_OPACITY = {
 };
 
 export const ITEM = {
-  // Block items (1-22 match BLOCK)
+  // Block items (1-27 match BLOCK)
   GRASS: 1, DIRT: 2, STONE: 3, WOOD: 4, BRICK: 5, WATER: 6, LEAVES: 7, FLOWER: 8,
   MUD: 9, CLAY: 10, LILY_PAD: 11, REED: 12,
   COAL: 13, IRON_ORE_ITEM: 14, GOLD_ORE_ITEM: 15, DIAMOND_ORE_ITEM: 16,
@@ -119,6 +126,11 @@ export const ITEM = {
   CHEST: 23,       // 宝箱 (同 BLOCK.CHEST)
   GUNPOWDER: 146,  // 火药 (Creeper 掉落)
   ENDER_PEARL: 147,// 末影珍珠 (Enderman 掉落)
+  COBBLESTONE: 148,// 圆石 (石头掉落)
+  // New block items (block types 25-27)
+  GRANITE_ITEM: 25,
+  DIORITE_ITEM: 26,
+  ANDESITE_ITEM: 27,
 };
 
 export const ITEM_NAMES = {
@@ -143,6 +155,10 @@ export const ITEM_NAMES = {
   [ITEM.LEATHER_CHESTPLATE]: '皮革胸甲', [ITEM.IRON_CHESTPLATE]: '铁胸甲', [ITEM.DIAMOND_CHESTPLATE_NEW]: '钻石胸甲', [ITEM.NETHERITE_CHESTPLATE]: '下界合金胸甲',
   [ITEM.LEATHER_LEGGINGS]: '皮革护腿', [ITEM.IRON_LEGGINGS]: '铁护腿', [ITEM.DIAMOND_LEGGINGS]: '钻石护腿', [ITEM.NETHERITE_LEGGINGS]: '下界合金护腿',
   [ITEM.LEATHER_BOOTS]: '皮革靴子', [ITEM.IRON_BOOTS]: '铁靴子', [ITEM.DIAMOND_BOOTS]: '钻石靴子', [ITEM.NETHERITE_BOOTS]: '下界合金靴子',
+  [ITEM.COBBLESTONE]: '圆石',
+  [ITEM.GRANITE_ITEM]: '花岗岩',
+  [ITEM.DIORITE_ITEM]: '闪长岩',
+  [ITEM.ANDESITE_ITEM]: '安山岩',
   [ITEM.CHEST]: '宝箱', [ITEM.GUNPOWDER]: '火药', [ITEM.ENDER_PEARL]: '末影珍珠',
 };
 
@@ -169,11 +185,23 @@ export const ITEM_COLORS = {
   [ITEM.LEATHER_CHESTPLATE]: 0xC4956A, [ITEM.IRON_CHESTPLATE]: 0xC0C0C0, [ITEM.DIAMOND_CHESTPLATE_NEW]: 0x2BD2E8, [ITEM.NETHERITE_CHESTPLATE]: 0x4A0E4E,
   [ITEM.LEATHER_LEGGINGS]: 0xC4956A, [ITEM.IRON_LEGGINGS]: 0xC0C0C0, [ITEM.DIAMOND_LEGGINGS]: 0x2BD2E8, [ITEM.NETHERITE_LEGGINGS]: 0x4A0E4E,
   [ITEM.LEATHER_BOOTS]: 0xC4956A, [ITEM.IRON_BOOTS]: 0xC0C0C0, [ITEM.DIAMOND_BOOTS]: 0x2BD2E8, [ITEM.NETHERITE_BOOTS]: 0x4A0E4E,
+  [ITEM.GRANITE_ITEM]: 0xCC8866,
+  [ITEM.DIORITE_ITEM]: 0xDDDDDD,
+  [ITEM.ANDESITE_ITEM]: 0x888888,
   [ITEM.CHEST]: 0x8D6E63, [ITEM.GUNPOWDER]: 0x4A4A4A, [ITEM.ENDER_PEARL]: 0x9C27B0,
 };
 
 export function isSolid(block) {
   return block !== BLOCK.AIR && block !== BLOCK.WATER;
+}
+
+// Block → item drop mapping (non-precision mining drops)
+const BLOCK_DROPS = {
+  [BLOCK.STONE]: ITEM.COBBLESTONE,
+};
+
+export function getBlockDrop(blockType) {
+  return BLOCK_DROPS[blockType] || blockType;
 }
 
 // Ore generation config: { scale, scarcity, minY, maxY }
@@ -696,6 +724,25 @@ export class World {
 
     // Phase 5: Cave generation using 3D noise
     {
+      for (let lx = 0; lx < CHUNK_SIZE; lx++) {
+        for (let lz = 0; lz < CHUNK_SIZE; lz++) {
+          const wx = worldXO + lx, wz = worldZO + lz;
+          for (let y = 4; y < WORLD_HEIGHT - 10; y++) {
+            const blockType = cm.getBlock(wx, y, wz);
+            if (blockType !== BLOCK.STONE) continue;
+            const variantNoise = simplex3D(wx * 0.015, y * 0.015, wz * 0.015);
+            if (variantNoise > 0.4) {
+              cm.setBlock(wx, y, wz, BLOCK.GRANITE);
+            } else if (variantNoise < -0.4) {
+              cm.setBlock(wx, y, wz, BLOCK.DIORITE);
+            } else if (variantNoise > 0.2 && variantNoise < 0.25) {
+              cm.setBlock(wx, y, wz, BLOCK.ANDESITE);
+            }
+          }
+        }
+      }
+    }
+    {
       for (let x = 2; x < w - 2; x++) {
         for (let z = 2; z < d - 2; z++) {
           let surfaceY = -1;
@@ -875,6 +922,8 @@ export class World {
     const isDesertWorld = biomeType === 'desert';
     const isTundraWorld = biomeType === 'tundra';
     const isCaveWorld = biomeType === 'cave';
+    const isJungleWorld = biomeType === 'jungle';
+    const isCherryWorld = biomeType === 'cherry';
 
     // Heightmap for chunk columns + 2-cell border (for biome slope computation)
     const PAD = 2;
@@ -905,6 +954,9 @@ export class World {
         } else if (isTundraWorld) {
           biomeMap[hmIdx(lx, lz)] = 6;
         } else {
+          // Common terrain for plains, jungle, cherry (non-special biomes)
+          if (isJungleWorld) biomeMap[hmIdx(lx, lz)] = 7;
+          else if (isCherryWorld) biomeMap[hmIdx(lx, lz)] = 8;
           const riverNoise = simplex2D(wx * 0.02, wz * 0.02);
           const isRiver = Math.abs(riverNoise) < RIVER_THRESHOLD && height < MOUNTAIN_HEIGHT;
           if (isRiver) {
@@ -1070,6 +1122,28 @@ export class World {
       }
     }
 
+
+    // Phase 4.5: Stone variant generation (granite, diorite, andesite)
+    {
+      for (let lx = 0; lx < CHUNK_SIZE; lx++) {
+        for (let lz = 0; lz < CHUNK_SIZE; lz++) {
+          const wx = worldXO + lx, wz = worldZO + lz;
+          for (let y = 4; y < WORLD_HEIGHT - 10; y++) {
+            const blockType = cm.getBlock(wx, y, wz);
+            if (blockType !== BLOCK.STONE) continue;
+            const variantNoise = simplex3D(wx * 0.015, y * 0.015, wz * 0.015);
+            if (variantNoise > 0.4) {
+              cm.setBlock(wx, y, wz, BLOCK.GRANITE);
+            } else if (variantNoise < -0.4) {
+              cm.setBlock(wx, y, wz, BLOCK.DIORITE);
+            } else if (variantNoise > 0.2 && variantNoise < 0.25) {
+              cm.setBlock(wx, y, wz, BLOCK.ANDESITE);
+            }
+          }
+        }
+      }
+    }
+
     // Phase 5: Cave generation
     {
       for (let lx = 2; lx < CHUNK_SIZE - 2; lx++) {
@@ -1229,15 +1303,83 @@ export class World {
     for (let lx = 3; lx < CHUNK_SIZE - 3; lx++) {
       for (let lz = 3; lz < CHUNK_SIZE - 3; lz++) {
         const idx = hmIdx(lx, lz);
-        if (biomeMap[idx] !== 0) continue;
+        if (biomeMap[idx] !== 0 && biomeMap[idx] !== 8) continue;
         const wx = worldXO + lx, wz = worldZO + lz;
         const isNearRiver = biomeMap[hmIdx(lx - 1, lz)] === 2 || biomeMap[hmIdx(lx + 1, lz)] === 2 ||
                             biomeMap[hmIdx(lx, lz - 1)] === 2 || biomeMap[hmIdx(lx, lz + 1)] === 2;
-        if (Math.random() > (isNearRiver ? 0.05 : 0.02)) continue;
+        const flowerRate = biomeMap[idx] === 8 ? 0.04 : (isNearRiver ? 0.05 : 0.02);
+        if (Math.random() > flowerRate) continue;
         const ht = Math.floor(heightMap[idx]);
         if (ht >= 1 && cm.getBlock(wx, ht, wz) === BLOCK.GRASS &&
             cm.getBlock(wx, ht + 1, wz) === BLOCK.AIR) {
           cm.setBlock(wx, ht + 1, wz, BLOCK.FLOWER);
+        }
+      }
+    }
+
+    // Jungle trees (dense, tall)
+    if (isJungleWorld) {
+      for (let lx = 3; lx < CHUNK_SIZE - 3; lx++) {
+        for (let lz = 3; lz < CHUNK_SIZE - 3; lz++) {
+          const idx = hmIdx(lx, lz);
+          if (biomeMap[idx] !== 7 || Math.random() > 0.06) continue;
+          const wx = worldXO + lx, wz = worldZO + lz;
+          const ht = Math.floor(heightMap[idx]);
+          if (ht < 1) continue;
+          const surfBlock = cm.getBlock(wx, ht, wz);
+          if (surfBlock !== BLOCK.GRASS && surfBlock !== BLOCK.DIRT) continue;
+          const trunkHeight = 5 + Math.floor(Math.random() * 4);
+          if (ht + trunkHeight + 3 >= WORLD_HEIGHT) continue;
+          for (let ty = 1; ty <= trunkHeight; ty++) {
+            cm.setBlock(wx, ht + ty, wz, BLOCK.WOOD);
+          }
+          const leafBase = ht + trunkHeight - 2;
+          for (let dx = -2; dx <= 2; dx++) {
+            for (let dz = -2; dz <= 2; dz++) {
+              for (let ly = 0; ly <= 3; ly++) {
+                const lx2 = wx + dx, lz2 = wz + dz, lyPos = leafBase + ly;
+                if (Math.abs(dx) === 2 && Math.abs(dz) === 2 && Math.random() > 0.5) continue;
+                if (lx2 >= 0 && lx2 < WORLD_WIDTH && lz2 >= 0 && lz2 < WORLD_DEPTH && lyPos < WORLD_HEIGHT) {
+                  if (cm.getBlock(lx2, lyPos, lz2) === BLOCK.AIR) {
+                    cm.setBlock(lx2, lyPos, lz2, BLOCK.LEAVES);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Cherry trees
+    if (isCherryWorld) {
+      for (let lx = 3; lx < CHUNK_SIZE - 3; lx++) {
+        for (let lz = 3; lz < CHUNK_SIZE - 3; lz++) {
+          const idx = hmIdx(lx, lz);
+          if (biomeMap[idx] !== 8 || Math.random() > 0.04) continue;
+          const wx = worldXO + lx, wz = worldZO + lz;
+          const ht = Math.floor(heightMap[idx]);
+          if (ht < 1) continue;
+          const surfBlock = cm.getBlock(wx, ht, wz);
+          if (surfBlock !== BLOCK.GRASS && surfBlock !== BLOCK.DIRT) continue;
+          const trunkHeight = 3 + Math.floor(Math.random() * 3);
+          if (ht + trunkHeight + 2 >= WORLD_HEIGHT) continue;
+          for (let ty = 1; ty <= trunkHeight; ty++) {
+            cm.setBlock(wx, ht + ty, wz, BLOCK.WOOD);
+          }
+          const leafBase = ht + trunkHeight - 1;
+          for (let dx = -1; dx <= 1; dx++) {
+            for (let dz = -1; dz <= 1; dz++) {
+              for (let ly = 0; ly <= 2; ly++) {
+                const lx2 = wx + dx, lz2 = wz + dz, lyPos = leafBase + ly;
+                if (lx2 >= 0 && lx2 < WORLD_WIDTH && lz2 >= 0 && lz2 < WORLD_DEPTH && lyPos < WORLD_HEIGHT) {
+                  if (cm.getBlock(lx2, lyPos, lz2) === BLOCK.AIR) {
+                    cm.setBlock(lx2, lyPos, lz2, BLOCK.LEAVES);
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -1337,17 +1479,18 @@ export class World {
             if (surfaceY + 1 < WORLD_HEIGHT &&
                 this.getBlock(bx, surfaceY + 1, bz) === BLOCK.AIR &&
                 this.getBlock(bx, surfaceY + 2, bz) === BLOCK.AIR) {
-              return [bx + 0.5, surfaceY + 1, bz + 0.5];
+              for (let cy = surfaceY + 2; cy <= surfaceY + 11 && cy < WORLD_HEIGHT; cy++) this.setBlock(bx, cy, bz, BLOCK.AIR);
+              return [bx + 0.5, surfaceY + 6, bz + 0.5];
             }
           }
         }
       }
       for (let y = WORLD_HEIGHT - 1; y >= 1; y--) {
         if (this.getBlock(centerX, y, centerZ) !== BLOCK.AIR && this.getBlock(centerX, y, centerZ) !== BLOCK.WATER) {
-          return [centerX + 0.5, y + 1, centerZ + 0.5];
+          return [centerX + 0.5, y + 6, centerZ + 0.5];
         }
       }
-      return [centerX + 0.5, 24, centerZ + 0.5];
+      return [centerX + 0.5, 29, centerZ + 0.5];
     }
 
     // Non-chunk mode
@@ -1382,17 +1525,18 @@ export class World {
           if (surfaceY + 1 < this._wh &&
               this.blocks[this.index(bx, surfaceY + 1, bz)] === BLOCK.AIR &&
               this.blocks[this.index(bx, surfaceY + 2, bz)] === BLOCK.AIR) {
-            return [bx + 0.5, surfaceY + 1, bz + 0.5];
+            for (let cy = surfaceY + 2; cy <= surfaceY + 11 && cy < this._wh; cy++) this.setBlock(bx, cy, bz, BLOCK.AIR);
+            return [bx + 0.5, surfaceY + 6, bz + 0.5];
           }
         }
       }
     }
     for (let y = this._wh - 1; y >= 1; y--) {
       if (this.blocks[this.index(cx, y, cz)] !== BLOCK.AIR && this.blocks[this.index(cx, y, cz)] !== BLOCK.WATER) {
-        return [cx + 0.5, y + 1, cz + 0.5];
+        return [cx + 0.5, y + 6, cz + 0.5];
       }
     }
-    return [cx + 0.5, 24, cz + 0.5];
+    return [cx + 0.5, 29, cz + 0.5];
   }
 
   // === BSP Dungeon Generation ===

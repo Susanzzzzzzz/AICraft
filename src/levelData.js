@@ -97,4 +97,36 @@ export const LEVELS = [
       { id: 'hut',     name: '沼泽小屋周边', seedOffset: 300, biomeType: 'swamp', waterLevel: 26 },
     ],
   }),
+
+
+  new MCLevel({
+    id: 'level_007',
+    name: '丛林探险',
+    description: '在茂密的丛林中穿行，收集雨林资源',
+    tasks: [
+      { id: 't1', type: 'collect', target: ITEM.WOOD, count: 32, current: 0, description: '收集 32 个木头' },
+      { id: 't2', type: 'collect', target: ITEM.LEAVES, count: 16, current: 0, description: '收集 16 个树叶' },
+      { id: 't3', type: 'collect', target: ITEM.STONE, count: 16, current: 0, description: '收集 16 个石头' },
+      { id: 't4', type: 'collect', target: ITEM.DIAMOND, count: 4, current: 0, description: '收集 4 个钻石', optional: true },
+    ],
+    rewards: [],
+    unlockSkills: [],
+    terrains: [{ id: 'jungle', name: '丛林', seedOffset: 0, biomeType: 'jungle', waterLevel: 28 }],
+  }),
+
+  new MCLevel({
+    id: 'level_008',
+    name: '樱花谷',
+    description: '在美丽的樱花林中漫步，收集粉色回忆',
+    tasks: [
+      { id: 't1', type: 'collect', target: ITEM.FLOWER, count: 16, current: 0, description: '收集 16 个花朵' },
+      { id: 't2', type: 'collect', target: ITEM.WOOD, count: 16, current: 0, description: '收集 16 个木头' },
+      { id: 't3', type: 'collect', target: ITEM.PLANK, count: 32, current: 0, description: '合成 32 个木板' },
+      { id: 't4', type: 'collect', target: ITEM.DIAMOND, count: 8, current: 0, description: '收集 8 个钻石', optional: true },
+    ],
+    rewards: [],
+    unlockSkills: [],
+    terrains: [{ id: 'cherry', name: '樱花谷', seedOffset: 0, biomeType: 'cherry', waterLevel: 28 }],
+  }),
+
 ];

@@ -370,8 +370,8 @@ export class TouchController {
     actionRow.style.cssText = `
       position: absolute;
       bottom: 15px;
-      left: 50%;
-      transform: translateX(-50%);
+      right: 15px;
+      transform: none;
       display: flex;
       gap: 10px;
       align-items: center;
@@ -447,7 +447,7 @@ export class TouchController {
       top: 60px;
       display: flex;
       flex-wrap: wrap;
-      width: 126px;
+      width: 140px;
       gap: 8px;
       justify-content: center;
       pointer-events: none;
@@ -460,6 +460,8 @@ export class TouchController {
       { label: '切换', action: 'skillCycleExplore' },
       { label: '武器', action: 'weaponSwitch' },
       { label: '飞行', action: 'flight' },
+      { label: '↑', action: 'ascend' },
+      { label: '↓', action: 'descend' },
       { label: '视角', action: 'toggleCamera' },
       { label: '帮助', action: 'help' },
     ];
@@ -615,6 +617,14 @@ export class TouchController {
         this.input._actions.push('flight');
         break;
 
+      case 'ascend':
+        this.input.keys['Space'] = true;
+        break;
+
+      case 'descend':
+        this.input.keys['ShiftLeft'] = true;
+        break;
+
       case 'block':
         this.input.mouseButtons[3] = true;
         this.input._actions.push('block');
@@ -645,6 +655,14 @@ export class TouchController {
 
       case 'place':
         this.input.mouseButtons[2] = false;
+        break;
+
+      case 'ascend':
+        this.input.keys['Space'] = false;
+        break;
+
+      case 'descend':
+        this.input.keys['ShiftLeft'] = false;
         break;
 
       case 'block':
