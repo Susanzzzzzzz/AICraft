@@ -29,6 +29,52 @@ import { Diagnostics } from './diagnostics.js';
 
 const SAVE_KEY = 'aicraft_save_v4';
 
+// Item type → emoji mapping for inventory icons
+const EMOJI_MAP = new Map([
+  // Blocks (1-12)
+  [ITEM.GRASS, '🧱'], [ITEM.DIRT, '🧱'], [ITEM.STONE, '🧱'], [ITEM.WOOD, '🪵'],
+  [ITEM.BRICK, '🧱'], [ITEM.WATER, '🌊'], [ITEM.LEAVES, '🌿'], [ITEM.FLOWER, '🌹'],
+  [ITEM.MUD, '🧱'], [ITEM.CLAY, '🧱'], [ITEM.LILY_PAD, '🪷'], [ITEM.REED, '🌾'],
+  // Ores (13-18)
+  [ITEM.COAL, '🪨'], [ITEM.IRON_ORE_ITEM, '💎'], [ITEM.GOLD_ORE_ITEM, '💎'],
+  [ITEM.DIAMOND_ORE_ITEM, '💎'], [ITEM.REDSTONE_ORE_ITEM, '💎'], [ITEM.LAPIS_ORE_ITEM, '💎'],
+  // Terrain items (19-22)
+  [ITEM.SAND_ITEM, '🪨'], [ITEM.GRAVEL_ITEM, '🪨'], [ITEM.SNOW_ITEM, '❄️'], [ITEM.CACTUS_ITEM, '🌵'],
+  // Chest, new stones
+  [ITEM.CHEST, '🧰'],
+  [ITEM.GRANITE_ITEM, '🧱'], [ITEM.DIORITE_ITEM, '🧱'], [ITEM.ANDESITE_ITEM, '🧱'],
+  // Crafted materials
+  [ITEM.PLANK, '🪵'], [ITEM.STICK, '🥢'],
+  // Weapons — swords
+  [ITEM.SWORD_WOOD, '🗡️'], [ITEM.SWORD_STONE, '🗡️'], [ITEM.SWORD_IRON, '🗡️'],
+  [ITEM.SWORD_DIAMOND, '🗡️'], [ITEM.SWORD_NETHERITE, '🗡️'],
+  [ITEM.SWORD_FROSTMOURNE, '🗡️'], [ITEM.SWORD_DRAGON, '🗡️'],
+  // Materials
+  [ITEM.DIAMOND, '💎'], [ITEM.DIAMOND_CHESTPLATE, '🛡️'], [ITEM.IRON_INGOT, '⛏️'],
+  [ITEM.NETHERITE_SCRAP, '💎'], [ITEM.SLIME_BALL, '🟢'],
+  // Tools
+  [ITEM.PICKAXE_WOOD, '⛏️'], [ITEM.PICKAXE_STONE, '⛏️'], [ITEM.PICKAXE_IRON, '⛏️'], [ITEM.PICKAXE_DIAMOND, '⛏️'],
+  [ITEM.AXE_WOOD, '⛏️'], [ITEM.AXE_STONE, '⛏️'], [ITEM.AXE_IRON, '⛏️'], [ITEM.AXE_DIAMOND, '⛏️'],
+  [ITEM.SHOVEL_WOOD, '⛏️'], [ITEM.SHOVEL_STONE, '⛏️'], [ITEM.SHOVEL_IRON, '⛏️'], [ITEM.SHOVEL_DIAMOND, '⛏️'],
+  // Ranged
+  [ITEM.BOW, '🏹'], [ITEM.ARROW, '➵'],
+  // Armor
+  [ITEM.LEATHER_HELMET, '🛡️'], [ITEM.IRON_HELMET, '🛡️'], [ITEM.DIAMOND_HELMET, '🛡️'], [ITEM.NETHERITE_HELMET, '🛡️'],
+  [ITEM.LEATHER_CHESTPLATE, '🛡️'], [ITEM.IRON_CHESTPLATE, '🛡️'], [ITEM.DIAMOND_CHESTPLATE_NEW, '🛡️'], [ITEM.NETHERITE_CHESTPLATE, '🛡️'],
+  [ITEM.LEATHER_LEGGINGS, '🛡️'], [ITEM.IRON_LEGGINGS, '🛡️'], [ITEM.DIAMOND_LEGGINGS, '🛡️'], [ITEM.NETHERITE_LEGGINGS, '🛡️'],
+  [ITEM.LEATHER_BOOTS, '🛡️'], [ITEM.IRON_BOOTS, '🛡️'], [ITEM.DIAMOND_BOOTS, '🛡️'], [ITEM.NETHERITE_BOOTS, '🛡️'],
+  // Misc
+  [ITEM.GUNPOWDER, '💥'], [ITEM.ENDER_PEARL, '👁️'], [ITEM.COBBLESTONE, '🪨'],
+]);
+
+// Armor defense lookup for tooltip display
+const TOOLTIP_ARMOR_DEF = {
+  [ITEM.LEATHER_HELMET]: 1, [ITEM.IRON_HELMET]: 2, [ITEM.DIAMOND_HELMET]: 3, [ITEM.NETHERITE_HELMET]: 3,
+  [ITEM.LEATHER_CHESTPLATE]: 3, [ITEM.IRON_CHESTPLATE]: 6, [ITEM.DIAMOND_CHESTPLATE_NEW]: 8, [ITEM.NETHERITE_CHESTPLATE]: 8,
+  [ITEM.LEATHER_LEGGINGS]: 2, [ITEM.IRON_LEGGINGS]: 5, [ITEM.DIAMOND_LEGGINGS]: 6, [ITEM.NETHERITE_LEGGINGS]: 6,
+  [ITEM.LEATHER_BOOTS]: 1, [ITEM.IRON_BOOTS]: 2, [ITEM.DIAMOND_BOOTS]: 3, [ITEM.NETHERITE_BOOTS]: 3,
+};
+
 class Game {
   constructor() {
     this.world = null;
@@ -441,6 +487,18 @@ class Game {
     const craftSlots = document.querySelectorAll('#crafting-grid .craft-slot');
     const resultSlot = document.getElementById('craft-result-slot');
 
+    // Create tooltip element
+    this._tooltipEl = document.createElement('div');
+    this._tooltipEl.className = 'item-tooltip hidden';
+    overlay.appendChild(this._tooltipEl);
+
+    // Track mouse on overlay for tooltip positioning
+    overlay.addEventListener('mousemove', (e) => {
+      if (this._tooltipEl && !this._tooltipEl.classList.contains('hidden')) {
+        this._positionTooltip(e.clientX, e.clientY);
+      }
+    });
+
     // Build storage slots (36)
     storageGrid.innerHTML = '';
     for (let i = 0; i < 36; i++) {
@@ -449,8 +507,25 @@ class Game {
       slot.dataset.index = i;
       slot.dataset.type = 'storage';
       slot.addEventListener('click', () => this._onInvSlotClick('storage', i));
+      slot.addEventListener('mouseenter', () => this._showTooltip('storage', i));
+      slot.addEventListener('mouseleave', () => this._hideTooltip());
       storageGrid.appendChild(slot);
     }
+
+    // Build page navigation
+    this._pageNav = document.createElement('div');
+    this._pageNav.className = 'page-nav';
+    this._pageNav.innerHTML = '<span class="page-nav-btn" data-dir="-1">‹</span><span class="page-nav-indicator">1/2</span><span class="page-nav-btn" data-dir="1">›</span>';
+    this._pageNav.addEventListener('click', (e) => {
+      const btn = e.target.closest('.page-nav-btn');
+      if (!btn) return;
+      const dir = parseInt(btn.dataset.dir);
+      const newPage = this.inventory.currentPage + dir;
+      if (newPage < 0 || newPage > 1) return;
+      this.inventory.currentPage = newPage;
+      this._updateInventoryUI();
+    });
+    storageGrid.parentNode.insertBefore(this._pageNav, storageGrid.nextSibling);
 
     // Build hotbar row (8)
     hotbarRow.innerHTML = '';
@@ -461,6 +536,8 @@ class Game {
       slot.dataset.type = 'hotbar';
       if (i === this.inventory.selectedSlot) slot.classList.add('selected');
       slot.addEventListener('click', () => this._onInvSlotClick('hotbar', i));
+      slot.addEventListener('mouseenter', () => this._showTooltip('hotbar', i));
+      slot.addEventListener('mouseleave', () => this._hideTooltip());
       hotbarRow.appendChild(slot);
     }
 
@@ -577,12 +654,20 @@ class Game {
   }
 
   _updateInventoryUI() {
-    // Update storage slots
+    // Update storage slots with paging
+    const page = this.inventory.currentPage;
+    const offset = page * 36;
     const storageSlots = document.querySelectorAll('#storage-grid .inv-slot');
     storageSlots.forEach((el, i) => {
-      const item = this.inventory.storage[i];
+      const item = this.inventory.storage[offset + i];
       this._setSlotDisplay(el, item);
     });
+
+    // Update page indicator
+    if (this._pageNav) {
+      const indicator = this._pageNav.querySelector('.page-nav-indicator');
+      if (indicator) indicator.textContent = (page + 1) + '/2';
+    }
 
     // Update armor slots in inventory
     this._updateArmorUI();
@@ -604,6 +689,7 @@ class Game {
     // Determine CSS class from item type
     const typeName = this._getItemClassName(item.type);
     preview.classList.add(typeName);
+    preview.textContent = EMOJI_MAP.get(item.type) || '🧱';
     el.appendChild(preview);
     if (item.count > 1) {
       const count = document.createElement('span');
@@ -611,6 +697,43 @@ class Game {
       count.textContent = item.count;
       el.appendChild(count);
     }
+  }
+
+  _showTooltip(type, index) {
+    const item = type === 'storage' ? this.inventory.storage[index] : this.inventory.hotbar[index];
+    if (!item) return;
+    this._tooltipEl.textContent = this._buildTooltipText(item);
+    this._tooltipEl.classList.remove('hidden');
+  }
+
+  _hideTooltip() {
+    this._tooltipEl.classList.add('hidden');
+  }
+
+  _buildTooltipText(item) {
+    const name = ITEM_NAMES[item.type] || ('物品#' + item.type);
+    const weapon = getWeapon(item.type);
+    let text = name;
+    if (item.count > 1) text += ` ×${item.count}`;
+    if (weapon) {
+      text += ` | ⚔${weapon.damage} | ⚡${weapon.speed}`;
+    } else if (TOOLTIP_ARMOR_DEF[item.type]) {
+      text += ` | 🛡+${TOOLTIP_ARMOR_DEF[item.type]}`;
+    }
+    return text;
+  }
+
+  _positionTooltip(cx, cy) {
+    const el = this._tooltipEl;
+    el.style.left = '';
+    el.style.top = '';
+    const rect = el.getBoundingClientRect();
+    let left = cx + 14;
+    let top = cy + 14;
+    if (left + rect.width > window.innerWidth - 6) left = cx - rect.width - 14;
+    if (top + rect.height > window.innerHeight - 6) top = cy - rect.height - 14;
+    el.style.left = Math.max(4, left) + 'px';
+    el.style.top = Math.max(4, top) + 'px';
   }
 
   _getItemClassName(type) {
@@ -1847,7 +1970,8 @@ class Game {
     }
 
     // Update HUD
-    const weaponName = this.currentWeaponId ? (getWeapon(this.currentWeaponId)?.name || '') : '';
+    const w = this.currentWeaponId ? getWeapon(this.currentWeaponId) : null;
+    const weaponName = w ? `${w.name} | 攻击:${w.damage} | 速度:${w.speed}` : '';
     const levelProgress = this.currentLevel ? this.currentLevel.getTaskProgress() : [];
     // Compute skill cooldowns
     const skillCooldowns = this.unlockedSkillIds.map(skillId => {
@@ -2345,21 +2469,16 @@ class Game {
     this.cameraCtrl.resetPitch();
 
     // Clear nearby hostiles and slimes for safe spawn zone
-    const safeRadius = 10;
+    const SAFE_RADIUS = 10;
     const px = this.player.position[0], pz = this.player.position[2];
-    const filterByDistance = (mobs) => mobs.filter(m => {
-      const dx = m.position[0] - px, dz = m.position[2] - pz;
-      return (dx * dx + dz * dz) < safeRadius * safeRadius;
-    });
-    const nearHostiles = filterByDistance(this.hostiles);
-    for (const mob of nearHostiles) {
-      this.renderer.scene.remove(mob.group);
-      mob.dead = true;
-    }
-    const nearSlimes = filterByDistance(this.slimes);
-    for (const mob of nearSlimes) {
-      this.renderer.scene.remove(mob.group);
-      mob.dead = true;
+    for (const mobs of [this.hostiles, this.slimes]) {
+      for (const mob of mobs) {
+        const dx = mob.position[0] - px, dz = mob.position[2] - pz;
+        if (dx * dx + dz * dz < SAFE_RADIUS * SAFE_RADIUS) {
+          this.renderer.scene.remove(mob.group);
+          mob.dead = true;
+        }
+      }
     }
   }
 
@@ -2412,7 +2531,16 @@ class Game {
   // Perform an attack on a mob
   _performAttack(mob) {
     const weapon = this.currentWeaponId ? getWeapon(this.currentWeaponId) : null;
-    if (!weapon) return;
+
+    // Unarmed attack: 1 damage, 0.8s cooldown
+    if (!weapon) {
+      this._attackCooldownTimer = 0.8;
+      this._showDamageNumber(mob.position[0], mob.position[1] + (mob.height || 0.5), mob.position[2], 1, false);
+      this.audioManager.playSFX('attack');
+      mob.takeDamage(1);
+      if (mob.dead) this._handleMobDeath(mob);
+      return;
+    }
 
     this._attackCooldownTimer = weapon.speed;
 

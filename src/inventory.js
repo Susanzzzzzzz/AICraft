@@ -28,8 +28,9 @@ export class ItemStack {
 export class Inventory {
   constructor() {
     this.hotbar = new Array(8).fill(null);   // indices 0-7
-    this.storage = new Array(36).fill(null); // indices 0-35
+    this.storage = new Array(72).fill(null); // indices 0-71 (2 pages × 36)
     this.selectedSlot = 0;                   // 0-7 hotbar index
+    this.currentPage = 0;                    // 0 or 1
     this.armorSlots = { head: null, chest: null, legs: null, feet: null };
   }
 
@@ -119,7 +120,7 @@ export class Inventory {
     this.hotbar = (data.hotbar || []).map(s => s ? new ItemStack(s.type, s.count) : null);
     while (this.hotbar.length < 8) this.hotbar.push(null);
     this.storage = (data.storage || []).map(s => s ? new ItemStack(s.type, s.count) : null);
-    while (this.storage.length < 36) this.storage.push(null);
+    while (this.storage.length < 72) this.storage.push(null);
     this.selectedSlot = data.selectedSlot || 0;
     // Restore armor slots
     if (data.armor) {

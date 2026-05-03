@@ -26,8 +26,8 @@ export class CameraController {
 
     // First-person weapon view model (child of camera)
     this._fpWeaponGroup = new THREE.Group();
-    this._fpWeaponGroup.position.set(0.25, -0.32, -0.5);
-    this._fpWeaponGroup.rotation.z = 0.15;
+    this._fpWeaponGroup.position.set(0.35, -0.38, -0.8);
+    this._fpWeaponGroup.rotation.z = 0.1;
     this.camera.add(this._fpWeaponGroup);
   }
 
@@ -153,8 +153,8 @@ export class CameraController {
       -Math.cos(yaw) * this.thirdPersonDist
     );
     this.camera.position.copy(this._eyePos).add(this._offset);
-    // Look ahead in the direction the player is facing (includes pitch)
-    this._target.copy(this._eyePos).addScaledVector(this._forward, 5);
+    // Look at the player so their face is visible
+    this._target.copy(this._eyePos);
     this.camera.lookAt(this._target);
 
     this._fpWeaponGroup.visible = false;
