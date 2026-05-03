@@ -22,8 +22,8 @@ test-results/
 package.json
 package-lock.json
 
-# 已归档的旧变更
-openspec/changes/archive/
+# OpenSpec（隐私敏感，不提交）
+openspec/
 
 # VS Code 工作区
 *.code-workspace
@@ -38,5 +38,3 @@ AI Craft/
 WechatIMG*.jpeg
 WechatIMG*.jpg
 
-# OpenSpec 历史变更记录
-openspec/changes/
