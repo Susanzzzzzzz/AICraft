@@ -88,19 +88,103 @@ class HostileMob {
     this.group = new THREE.Group();
     this.pivots = {};
     this._buildModel();
+    this._createNameTag();
     this.group.traverse(child => child.layers.set(1));
     this._updateGroupPosition();
   }
 
   _buildModel() {}
 
+  _createNameTag() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 64;
+    this._nameTagCanvas = canvas;
+    const ctx = canvas.getContext('2d');
+    const texture = new THREE.CanvasTexture(canvas);
+    this._nameTagTexture = texture;
+    const material = new THREE.SpriteMaterial({
+      map: texture, depthTest: false, transparent: true,
+    });
+    const sprite = new THREE.Sprite(material);
+    sprite.position.set(0, this.height + 0.3, 0);
+    sprite.scale.set(1.2, 0.6, 1);
+    sprite.layers.set(1);
+    this._nameTagSprite = sprite;
+    this._updateNameTagTexture();
+    this.group.add(sprite);
+  }
+
+  _updateNameTagTexture() {
+    if (!this._nameTagSprite || !this._nameTagCanvas) return;
+    const ctx = this._nameTagCanvas.getContext('2d');
+    const w = this._nameTagCanvas.width;
+    const h = this._nameTagCanvas.height;
+    ctx.clearRect(0, 0, w, h);
+    const mobName = MOB_NAMES[this.constructor.name] || '怪物';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(mobName, w / 2, 4);
+    const barX = 14, barY = 28, barW = 100, barH = 10, radius = 3;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    this._roundRect(ctx, barX, barY, barW, barH, radius);
+    ctx.fill();
+    const ratio = this.health / this.maxHealth;
+    let color;
+    if (ratio > 0.6) color = '#4CAF50';
+    else if (ratio > 0.3) color = '#FFC107';
+    else color = '#F44336';
+    const fillW = Math.max(0, barW * ratio);
+    ctx.fillStyle = color;
+    this._roundRect(ctx, barX, barY, fillW, barH, radius);
+    ctx.fill();
+    ctx.font = '10px sans-serif';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${Math.ceil(this.health)}/${this.maxHealth}`, barX + barW - 4, barY + barH / 2);
+    this._nameTagTexture.needsUpdate = true;
+  }
+
+  _roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
   _updateGroupPosition() {
     this.group.position.set(this.position[0], this.position[1], this.position[2]);
+  }
+
+  _disposeNameTag() {
+    if (this._nameTagSprite) {
+      if (this._nameTagSprite.material) this._nameTagSprite.material.dispose();
+      this.group.remove(this._nameTagSprite);
+      this._nameTagSprite = null;
+    }
+    if (this._nameTagTexture) {
+      this._nameTagTexture.dispose();
+      this._nameTagTexture = null;
+    }
+    if (this._nameTagCanvas) {
+      this._nameTagCanvas = null;
+    }
   }
 
   takeDamage(amount) {
     if (this.dead) return false;
     this.health -= amount;
+    this._updateNameTagTexture();
     this.aiState = AI_CHASE;
     this.aiTimer = 5;
     this.group.traverse(child => {
@@ -886,5 +970,15 @@ class CaveSpider extends HostileMob {
     return [];
   }
 }
+
+const MOB_NAMES = {
+  Zombie: '🧟 僵尸',
+  Skeleton: '💀 骷髅',
+  Spider: '🕷 蜘蛛',
+  Creeper: '💥 苦力怕',
+  Enderman: '👁 末影人',
+  Wolf: '🐺 狼',
+  CaveSpider: '🕷洞穴蜘蛛',
+};
 
 export { HostileMob, Zombie, Skeleton, Spider, Creeper, Enderman, Wolf, CaveSpider };

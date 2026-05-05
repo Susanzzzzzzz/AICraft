@@ -1,21 +1,26 @@
 import * as esbuild from 'esbuild';
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, chmodSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { execSync } from 'child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = resolve(__dirname, 'dist');
 const INDEX = resolve(__dirname, 'index.html');
 const MAIN = resolve(__dirname, 'src', 'main.js');
 const CSS = resolve(__dirname, 'src', 'style.css');
-const START_IMG = 'WechatIMG282.jpeg';
+const START_IMG = 'start-img.jpg';
+const ANDROID_DIR = resolve(__dirname, 'android');
+const ICON_SRC = resolve(__dirname, 'pic', String.fromCharCode(22270,26631) + '.png');
 
-async function build() {
+export async function build() {
   const result = await esbuild.build({
     entryPoints: [MAIN],
     bundle: true,
     format: 'esm',
-    minify: true,
+    minifyWhitespace: true,
+    minifySyntax: true,
+    minifyIdentifiers: false,
     write: false,
   });
 
@@ -39,14 +44,22 @@ async function build() {
     .replace('</body>', `<script>\n${jsCode}\n</script>\n</body>`);
 
   if (imgDataUri) {
-    html = html.replace(/src="[^"]*WechatIMG282\.jpeg"/, `src="${imgDataUri}"`);
+    html = html.replace(/src="[^"]*start-img.jpg"/, `src="${imgDataUri}"`);
   } else {
     // Remove the img tag entirely so no broken image shows
-    html = html.replace(/<img[^>]*WechatIMG282\.jpeg[^>]*>/, '');
+    html = html.replace(/<img[^>]*start-img.jpg[^>]*>/, '');
   }
 
   writeFileSync(resolve(DIST, 'AICraft.html'), html);
   console.log(`Built ${(html.length / 1024).toFixed(0)}KB to dist/AICraft.html`);
 }
 
-build().catch(e => { console.error(e); process.exit(1); });
+// Dispatch
+let args = process.argv.slice(2);
+if (args[0] === "android") {
+  import("./build-android.js").then(function(m) {
+    m.buildAndroid().catch(function(e) { console.error(e); process.exit(1); });
+  }).catch(function(e) { console.error(e); process.exit(1); });
+} else {
+  build().catch(function(e) { console.error(e); process.exit(1); });
+}

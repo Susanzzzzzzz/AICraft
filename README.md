@@ -15,7 +15,7 @@
 
 ---
 
-**AICraft** 是一款开源的体素沙盒游戏，直接在浏览器中运行。
+**AICraft** 是一款开源的体素沙盒游戏，**覆盖桌面端网页、移动端网页、Android APK 三端**，直接在浏览器中运行。
 
 > 🎯 **这不是一个普通的游戏项目** — 从第一行代码到完整的战斗/合成/关卡系统，全部由 **Claude Code + OpenSpec** AI 系统自动生成。作者完全不懂 JavaScript。
 
@@ -24,6 +24,7 @@
 🎵 **沉浸体验**：程序化 BGM · 15 种音效 · 昼夜循环 · 天气系统
 🔧 **开放源码**：Fork 项目、提交 Issue，AI 自动实现你的想法
 📖 [**操作手册**](docs/操作手册.md) · [**技术实现手册**](docs/技术实现手册.md)
+📋 **需求规格文档**：15 份完整 Spec，[任何人都可以按照这些文档自行搭建游戏](#-需求规格文档)
 
 ## 🎮 在线游玩
 
@@ -121,9 +122,9 @@ node build.js
 open dist/AICraft.html
 ```
 
-## 📋 需求规格文档
+## 📋 需求规格文档 — 自己动手搭建游戏
 
-项目提供了完整的 OpenSpec 需求规格文档，涵盖所有子系统：
+项目提供了完整的 **OpenSpec 需求规格文档**，涵盖所有子系统的详细设计。你完全可以根据这些文档，使用 AI 编程工具（Claude Code）自行搭建整个游戏：
 
 | 文档 | 说明 |
 |------|------|
@@ -131,9 +132,14 @@ open dist/AICraft.html
 | [Voxel World](openspec/specs/voxel-world/spec.md) | 体素世界生成和数据格式 |
 | [Inventory & Crafting](openspec/specs/inventory-crafting/spec.md) | 背包和合成系统 |
 | [Camera & View](openspec/specs/camera-view-controls/spec.md) | 相机控制和视角切换 |
-| [更多...](openspec/specs/) | 总共 15 份规格文档 |
+| [更多...](openspec/specs/) | 总共 **15 份规格文档**，覆盖全部玩法子系统 |
 
-任何人都可以按照这些文档自行搭建游戏。
+这些 Spec 文档是从零开始构建 AICraft 的"设计蓝图"。你只需要：
+1. 安装 Claude Code + OpenSpec
+2. 按 Spec 依次提交给 AI
+3. AI 自动生成代码，迭代构建完整游戏
+
+> 💡 **不会写代码？没关系，Spec 文档 + AI 让你也能做出一款完整的 3D 游戏。**
 
 ## 🏗️ 技术栈
 

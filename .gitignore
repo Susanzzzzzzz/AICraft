@@ -34,6 +34,12 @@ AI Craft/
 # Android SDK 本地安装
 android-sdk/
 
+# Android 构建缓存和自动生成文件
+android/.gradle/
+android/app/build/
+android/app/src/main/assets/
+android/local.properties
+
 # Claude Code 个人配置
 .claude/
 

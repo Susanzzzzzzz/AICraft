@@ -1,0 +1,32 @@
+schema: spec-driven
+
+templates:
+  proposal: openspec/templates/proposal.md
+  spec: openspec/templates/spec.md
+  design: openspec/templates/design.md
+  tasks: openspec/templates/tasks.md
+
+context: |
+  Project: AICraft — 方块世界浏览器游戏
+  Tech stack: Three.js (ES Modules via CDN), vanilla JavaScript, HTML/CSS
+  No build tools required — uses importmap + CDN, runs via Live Server
+  Architecture: ES Modules, single-page application
+  Rendering: Three.js InstancedMesh per block type
+  World size: 32×16×32 voxels
+  Domain: Voxel sandbox game inspired by Minecraft
+
+language: zh-CN
+
+rules:
+  proposal:
+    - 提案内容使用中文编写
+    - 保持简洁，聚焦于"做什么"和"为什么"
+    - 必须包含"非目标"章节
+  design:
+    - 使用 ASCII 图进行架构可视化
+    - 包含关键决策的权衡分析
+  tasks:
+    - 任务拆分为最多 2 小时的粒度
+    - 每个任务应产出可运行的增量
+  output:
+    - 所有文档产出使用中文

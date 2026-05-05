@@ -15,7 +15,17 @@ export const LEVELS = [
     ],
     rewards: [],
     unlockSkills: ['mc_mine_002'],
-    terrains: [{ id: 'default', name: '草原', seedOffset: 0, biomeType: 'plains' }],
+    terrains: [{ id: 'default', name: '草原', seedOffset: 0, biomeType: 'plains',
+      prefabs: [
+        { file: 'cabin', minCount: 1, maxCount: 2 },
+        { file: 'watchtower', minCount: 1, maxCount: 2 },
+        { file: 'well', minCount: 0, maxCount: 2, probability: 0.6 },
+        { file: 'tent', minCount: 0, maxCount: 2, probability: 0.6 },
+        { file: 'lamp_post', minCount: 1, maxCount: 3 },
+        { file: 'bush', minCount: 2, maxCount: 4 },
+        { file: 'rocks', minCount: 1, maxCount: 3 },
+      ]
+    }],
   }),
 
   new MCLevel({
@@ -30,7 +40,17 @@ export const LEVELS = [
     ],
     rewards: [],
     unlockSkills: ['mc_fight_001'],
-    terrains: [{ id: 'cave', name: '地下洞穴', seedOffset: 0, biomeType: 'cave', waterLevel: 20 }],
+    terrains: [{ id: 'cave', name: '地下洞穴', seedOffset: 0, biomeType: 'cave', waterLevel: 20,
+      prefabs: [
+        { file: 'mine_entrance', minCount: 1, maxCount: 3 },
+        { file: 'mushroom', minCount: 2, maxCount: 5 },
+        { file: 'bush', minCount: 1, maxCount: 3 },
+        { file: 'well', minCount: 0, maxCount: 1, probability: 0.5 },
+        { file: 'tent', minCount: 0, maxCount: 1, probability: 0.4 },
+        { file: 'lamp_post', minCount: 0, maxCount: 2 },
+        { file: 'rocks', minCount: 2, maxCount: 5 },
+      ]
+    }],
   }),
 
   new MCLevel({
@@ -45,7 +65,17 @@ export const LEVELS = [
     ],
     rewards: [],
     unlockSkills: ['mc_build_001'],
-    terrains: [{ id: 'desert', name: '沙漠', seedOffset: 0, biomeType: 'desert', waterLevel: 24 }],
+    terrains: [{ id: 'desert', name: '沙漠', seedOffset: 0, biomeType: 'desert', waterLevel: 24,
+      prefabs: [
+        { file: 'pyramid', minCount: 1, maxCount: 2 },
+        { file: 'cactus_cluster', minCount: 2, maxCount: 5 },
+        { file: 'well', minCount: 0, maxCount: 2, probability: 0.5 },
+        { file: 'tent', minCount: 0, maxCount: 1, probability: 0.4 },
+        { file: 'lamp_post', minCount: 0, maxCount: 2 },
+        { file: 'bush', minCount: 0, maxCount: 2 },
+        { file: 'rocks', minCount: 1, maxCount: 3 },
+      ]
+    }],
   }),
 
   new MCLevel({
@@ -60,7 +90,16 @@ export const LEVELS = [
     ],
     rewards: [],
     unlockSkills: ['mc_explore_001'],
-    terrains: [{ id: 'tundra', name: '冰原', seedOffset: 0, biomeType: 'tundra', waterLevel: 28 }],
+    terrains: [{ id: 'tundra', name: '冰原', seedOffset: 0, biomeType: 'tundra', waterLevel: 28,
+      prefabs: [
+        { file: 'igloo', minCount: 0, maxCount: 2, probability: 0.5 },
+        { file: 'tent', minCount: 0, maxCount: 2, probability: 0.5 },
+        { file: 'lamp_post', minCount: 0, maxCount: 2 },
+        { file: 'well', minCount: 0, maxCount: 1, probability: 0.4 },
+        { file: 'bush', minCount: 1, maxCount: 3 },
+        { file: 'rocks', minCount: 2, maxCount: 5 },
+      ]
+    }],
   }),
 
   new MCLevel({
@@ -75,7 +114,17 @@ export const LEVELS = [
     ],
     rewards: [],
     unlockSkills: ['mc_fight_002'],
-    terrains: [{ id: 'default', name: '平原', seedOffset: 0, biomeType: 'plains' }],
+    terrains: [{ id: 'default', name: '平原', seedOffset: 0, biomeType: 'plains',
+      prefabs: [
+        { file: 'cabin', minCount: 1, maxCount: 3 },
+        { file: 'watchtower', minCount: 0, maxCount: 2 },
+        { file: 'well', minCount: 1, maxCount: 2 },
+        { file: 'fountain', minCount: 0, maxCount: 2, probability: 0.6 },
+        { file: 'lamp_post', minCount: 2, maxCount: 5 },
+        { file: 'bush', minCount: 3, maxCount: 5 },
+        { file: 'rocks', minCount: 1, maxCount: 3 },
+      ]
+    }],
   }),
 
   new MCLevel({
@@ -91,7 +140,17 @@ export const LEVELS = [
     rewards: [],
     unlockSkills: ['mc_explore_002'],
     terrains: [
-      { id: 'default', name: '迷雾沼泽',     seedOffset: 0,   biomeType: 'swamp', waterLevel: 30 },
+      { id: 'default', name: '迷雾沼泽',     seedOffset: 0,   biomeType: 'swamp', waterLevel: 30,
+        prefabs: [
+          { file: 'swamp_hut', minCount: 0, maxCount: 2, probability: 0.6 },
+          { file: 'dead_tree', minCount: 3, maxCount: 6 },
+          { file: 'mushroom', minCount: 2, maxCount: 5 },
+          { file: 'bush', minCount: 1, maxCount: 3 },
+          { file: 'tent', minCount: 0, maxCount: 1, probability: 0.4 },
+          { file: 'lamp_post', minCount: 0, maxCount: 2 },
+          { file: 'rocks', minCount: 0, maxCount: 2 },
+        ]
+      },
       { id: 'reed',    name: '芦苇沼泽',     seedOffset: 100, biomeType: 'swamp', waterLevel: 28 },
       { id: 'misty',   name: '迷雾深沼',     seedOffset: 200, biomeType: 'swamp', waterLevel: 32 },
       { id: 'hut',     name: '沼泽小屋周边', seedOffset: 300, biomeType: 'swamp', waterLevel: 26 },
@@ -111,7 +170,17 @@ export const LEVELS = [
     ],
     rewards: [],
     unlockSkills: [],
-    terrains: [{ id: 'jungle', name: '丛林', seedOffset: 0, biomeType: 'jungle', waterLevel: 28 }],
+    terrains: [{ id: 'jungle', name: '丛林', seedOffset: 0, biomeType: 'jungle', waterLevel: 28,
+      prefabs: [
+        { file: 'cabin', minCount: 0, maxCount: 2, probability: 0.5 },
+        { file: 'tent', minCount: 0, maxCount: 2, probability: 0.6 },
+        { file: 'well', minCount: 0, maxCount: 1, probability: 0.4 },
+        { file: 'lamp_post', minCount: 0, maxCount: 2 },
+        { file: 'bush', minCount: 3, maxCount: 5 },
+        { file: 'mushroom', minCount: 1, maxCount: 3 },
+        { file: 'rocks', minCount: 1, maxCount: 2 },
+      ]
+    }],
   }),
 
   new MCLevel({
@@ -126,7 +195,17 @@ export const LEVELS = [
     ],
     rewards: [],
     unlockSkills: [],
-    terrains: [{ id: 'cherry', name: '樱花谷', seedOffset: 0, biomeType: 'cherry', waterLevel: 28 }],
+    terrains: [{ id: 'cherry', name: '樱花谷', seedOffset: 0, biomeType: 'cherry', waterLevel: 28,
+      prefabs: [
+        { file: 'sakura_pavilion', minCount: 1, maxCount: 2 },
+        { file: 'fountain', minCount: 0, maxCount: 2, probability: 0.6 },
+        { file: 'well', minCount: 0, maxCount: 2, probability: 0.6 },
+        { file: 'tent', minCount: 0, maxCount: 1, probability: 0.5 },
+        { file: 'lamp_post', minCount: 1, maxCount: 3 },
+        { file: 'bush', minCount: 2, maxCount: 4 },
+        { file: 'rocks', minCount: 1, maxCount: 2 },
+      ]
+    }],
   }),
 
 ];

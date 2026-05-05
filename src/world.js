@@ -1,4 +1,5 @@
 import { initNoise, simplex2D, simplex3D } from './noise.js';
+import { getPrefab } from './prefabs.js';
 
 // Backward-compat original sizes
 export const ORIGINAL_WIDTH = 128;
@@ -520,6 +521,12 @@ export class World {
           this._generateChunkTerrain(spawnCX + dx, spawnCZ + dz);
         }
       }
+
+      // Place prefabs in chunk mode
+      if (options.prefabs && options.prefabs.length > 0) {
+        this._placePrefabs(seed, options.prefabs, biomeType);
+      }
+
       for (let t = 1; t <= MAX_BLOCK_TYPE; t++) this.dirtyTypes.add(t);
       this._changes = {};
       return;
@@ -784,7 +791,7 @@ export class World {
     for (let x = 3; x < w - 3; x++) {
       for (let z = 3; z < d - 3; z++) {
         const idx = hmIdx(x, z);
-        if (biomeMap[idx] !== 3 || Math.random() > 0.015) continue;
+        if (biomeMap[idx] !== 3 || Math.random() > 0.025) continue;
         const ht = Math.floor(heightMap[idx]);
         if (ht < 1) continue;
         if (this.blocks[this.index(x, ht, z)] !== BLOCK.MUD) continue;
@@ -813,7 +820,7 @@ export class World {
     for (let x = 3; x < w - 3; x++) {
       for (let z = 3; z < d - 3; z++) {
         const idx = hmIdx(x, z);
-        if (biomeMap[idx] !== 0 || Math.random() > 0.03) continue;
+        if (biomeMap[idx] !== 0 || Math.random() > 0.05) continue;
         const ht = Math.floor(heightMap[idx]);
         if (ht < 1) continue;
         if (this.blocks[this.index(x, ht, z)] !== BLOCK.GRASS && this.blocks[this.index(x, ht, z)] !== BLOCK.DIRT) continue;
@@ -842,7 +849,7 @@ export class World {
     if (isDesertWorld) {
       for (let x = 2; x < w - 2; x++) {
         for (let z = 2; z < d - 2; z++) {
-          if (Math.random() > 0.01) continue;
+          if (Math.random() > 0.02) continue;
           const ht = Math.floor(heightMap[hmIdx(x, z)]);
           if (ht < 1) continue;
           if (this.blocks[this.index(x, ht, z)] !== BLOCK.SAND) continue;
@@ -860,7 +867,7 @@ export class World {
     if (isTundraWorld) {
       for (let x = 2; x < w - 2; x++) {
         for (let z = 2; z < d - 2; z++) {
-          if (Math.random() > 0.02) continue;
+          if (Math.random() > 0.035) continue;
           const ht = Math.floor(heightMap[hmIdx(x, z)]);
           if (ht < 1) continue;
           if (this.blocks[this.index(x, ht, z)] !== BLOCK.SNOW && this.blocks[this.index(x, ht, z)] !== BLOCK.DIRT) continue;
@@ -895,13 +902,18 @@ export class World {
         if (biomeMap[idx] !== 0) continue;
         const isNearRiver = biomeMap[hmIdx(x - 1, z)] === 2 || biomeMap[hmIdx(x + 1, z)] === 2 ||
                             biomeMap[hmIdx(x, z - 1)] === 2 || biomeMap[hmIdx(x, z + 1)] === 2;
-        if (Math.random() > (isNearRiver ? 0.05 : 0.02)) continue;
+        if (Math.random() > (isNearRiver ? 0.08 : 0.035)) continue;
         const ht = Math.floor(heightMap[idx]);
         if (ht >= 1 && this.blocks[this.index(x, ht, z)] === BLOCK.GRASS &&
             this.blocks[this.index(x, ht + 1, z)] === BLOCK.AIR) {
           this.blocks[this.index(x, ht + 1, z)] = BLOCK.FLOWER;
         }
       }
+    }
+
+    // Place prefabs in non-chunk mode
+    if (options.prefabs && options.prefabs.length > 0) {
+      this._placePrefabs(seed, options.prefabs, biomeType);
     }
 
     for (let t = 1; t <= MAX_BLOCK_TYPE; t++) this.dirtyTypes.add(t);
@@ -1189,7 +1201,7 @@ export class World {
     for (let lx = 3; lx < CHUNK_SIZE - 3; lx++) {
       for (let lz = 3; lz < CHUNK_SIZE - 3; lz++) {
         const idx = hmIdx(lx, lz);
-        if (biomeMap[idx] !== 3 || Math.random() > 0.015) continue;
+        if (biomeMap[idx] !== 3 || Math.random() > 0.025) continue;
         const wx = worldXO + lx, wz = worldZO + lz;
         const ht = Math.floor(heightMap[idx]);
         if (ht < 1) continue;
@@ -1219,7 +1231,7 @@ export class World {
     for (let lx = 3; lx < CHUNK_SIZE - 3; lx++) {
       for (let lz = 3; lz < CHUNK_SIZE - 3; lz++) {
         const idx = hmIdx(lx, lz);
-        if (biomeMap[idx] !== 0 || Math.random() > 0.03) continue;
+        if (biomeMap[idx] !== 0 || Math.random() > 0.05) continue;
         const wx = worldXO + lx, wz = worldZO + lz;
         const ht = Math.floor(heightMap[idx]);
         if (ht < 1) continue;
@@ -1250,7 +1262,7 @@ export class World {
     if (isDesertWorld) {
       for (let lx = 2; lx < CHUNK_SIZE - 2; lx++) {
         for (let lz = 2; lz < CHUNK_SIZE - 2; lz++) {
-          if (Math.random() > 0.01) continue;
+          if (Math.random() > 0.02) continue;
           const wx = worldXO + lx, wz = worldZO + lz;
           const ht = Math.floor(heightMap[hmIdx(lx, lz)]);
           if (ht < 1) continue;
@@ -1269,7 +1281,7 @@ export class World {
     if (isTundraWorld) {
       for (let lx = 2; lx < CHUNK_SIZE - 2; lx++) {
         for (let lz = 2; lz < CHUNK_SIZE - 2; lz++) {
-          if (Math.random() > 0.02) continue;
+          if (Math.random() > 0.035) continue;
           const wx = worldXO + lx, wz = worldZO + lz;
           const ht = Math.floor(heightMap[hmIdx(lx, lz)]);
           if (ht < 1) continue;
@@ -1307,7 +1319,7 @@ export class World {
         const wx = worldXO + lx, wz = worldZO + lz;
         const isNearRiver = biomeMap[hmIdx(lx - 1, lz)] === 2 || biomeMap[hmIdx(lx + 1, lz)] === 2 ||
                             biomeMap[hmIdx(lx, lz - 1)] === 2 || biomeMap[hmIdx(lx, lz + 1)] === 2;
-        const flowerRate = biomeMap[idx] === 8 ? 0.04 : (isNearRiver ? 0.05 : 0.02);
+        const flowerRate = biomeMap[idx] === 8 ? 0.06 : (isNearRiver ? 0.08 : 0.035);
         if (Math.random() > flowerRate) continue;
         const ht = Math.floor(heightMap[idx]);
         if (ht >= 1 && cm.getBlock(wx, ht, wz) === BLOCK.GRASS &&
@@ -1322,7 +1334,7 @@ export class World {
       for (let lx = 3; lx < CHUNK_SIZE - 3; lx++) {
         for (let lz = 3; lz < CHUNK_SIZE - 3; lz++) {
           const idx = hmIdx(lx, lz);
-          if (biomeMap[idx] !== 7 || Math.random() > 0.06) continue;
+          if (biomeMap[idx] !== 7 || Math.random() > 0.10) continue;
           const wx = worldXO + lx, wz = worldZO + lz;
           const ht = Math.floor(heightMap[idx]);
           if (ht < 1) continue;
@@ -1356,7 +1368,7 @@ export class World {
       for (let lx = 3; lx < CHUNK_SIZE - 3; lx++) {
         for (let lz = 3; lz < CHUNK_SIZE - 3; lz++) {
           const idx = hmIdx(lx, lz);
-          if (biomeMap[idx] !== 8 || Math.random() > 0.04) continue;
+          if (biomeMap[idx] !== 8 || Math.random() > 0.07) continue;
           const wx = worldXO + lx, wz = worldZO + lz;
           const ht = Math.floor(heightMap[idx]);
           if (ht < 1) continue;
@@ -1387,6 +1399,200 @@ export class World {
     // Mark chunk as no longer dirty after generation
     const chunk = cm.getChunk(cx, cz);
     if (chunk) chunk.dirty = false;
+  }
+
+  // === Prefab system ===
+
+  /**
+   * Place a prefab structure in the world.
+   * @param {object} prefab - Prefab data object with size, data, palette
+   * @param {number} cx - Center X in world coordinates
+   * @param {number} cy - Center Y (prefab layer 0 goes here)
+   * @param {number} cz - Center Z in world coordinates
+   */
+  placePrefab(prefab, cx, cy, cz, biomeType) {
+    const [sx, sy, sz] = prefab.size;
+    const ox = Math.floor(cx - sx / 2);
+    const oy = cy;
+    const oz = Math.floor(cz - sz / 2);
+
+    // Terrain preparation: flatten ground and clear vegetation in footprint
+    this._preparePrefabTerrain(ox, oy, oz, sx, sz, biomeType);
+
+    for (let y = 0; y < sy; y++) {
+      const layerStr = prefab.data[y];
+      if (!layerStr) continue;
+      for (let z = 0; z < sz; z++) {
+        for (let x = 0; x < sx; x++) {
+          const ch = layerStr[z * sx + x];
+          if (ch === ' ' || ch === undefined) continue;
+          const blockType = prefab.palette[ch];
+          if (blockType !== undefined && blockType > 0) {
+            this.setBlock(ox + x, oy + y, oz + z, blockType);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Prepare terrain for a prefab: flatten ground, clear vegetation, add foundation.
+   */
+  _preparePrefabTerrain(ox, oy, oz, sx, sz, biomeType) {
+    // Determine fill material based on biome
+    let fillBlock = BLOCK.DIRT;
+    let topBlock = BLOCK.GRASS;
+    if (biomeType === 'desert') { fillBlock = BLOCK.SAND; topBlock = BLOCK.SAND; }
+    else if (biomeType === 'tundra') { fillBlock = BLOCK.STONE; topBlock = BLOCK.SNOW; }
+    else if (biomeType === 'swamp') { fillBlock = BLOCK.MUD; topBlock = BLOCK.MUD; }
+    else if (biomeType === 'cave') { fillBlock = BLOCK.STONE; topBlock = BLOCK.STONE; }
+
+    // Phase 1: find ground surface in each column (ignore vegetation/wood above ground)
+    const surfaceHeights = Array(sx * sz).fill(-1);
+    let minSurface = oy;
+    let hasSurface = false;
+    for (let z = 0; z < sz; z++) {
+      for (let x = 0; x < sx; x++) {
+        const wx = ox + x, wz = oz + z;
+        let surf = -1;
+        for (let y = oy + 6; y >= 0; y--) {
+          const b = this.getBlock(wx, y, wz);
+          if (b === BLOCK.GRASS || b === BLOCK.DIRT || b === BLOCK.STONE ||
+              b === BLOCK.SAND || b === BLOCK.SNOW || b === BLOCK.MUD ||
+              b === BLOCK.GRAVEL || b === BLOCK.GRANITE || b === BLOCK.DIORITE ||
+              b === BLOCK.ANDESITE || b === BLOCK.CLAY) {
+            surf = y;
+            break;
+          }
+        }
+        if (surf >= 0) {
+          surfaceHeights[z * sx + x] = surf;
+          hasSurface = true;
+          if (surf < minSurface) minSurface = surf;
+        }
+      }
+    }
+    if (!hasSurface) return;
+
+    // Phase 2: clear vegetation and tree blocks above each column's surface (using cached heights)
+    for (let z = 0; z < sz; z++) {
+      for (let x = 0; x < sx; x++) {
+        const surf = surfaceHeights[z * sx + x];
+        if (surf < 0) continue;
+        const wx = ox + x, wz = oz + z;
+        for (let y = surf + 1; y <= oy + 6; y++) {
+          const b = this.getBlock(wx, y, wz);
+          if (b !== BLOCK.AIR && b !== BLOCK.WATER) {
+            this.setBlock(wx, y, wz, BLOCK.AIR);
+          }
+        }
+      }
+    }
+
+    // Phase 3: flatten terrain to the lowest surface height (using cached heights)
+    for (let z = 0; z < sz; z++) {
+      for (let x = 0; x < sx; x++) {
+        const surf = surfaceHeights[z * sx + x];
+        if (surf < 0) continue;
+        const wx = ox + x, wz = oz + z;
+
+        if (surf > minSurface) {
+          for (let y = surf; y > minSurface; y--) {
+            this.setBlock(wx, y, wz, BLOCK.AIR);
+          }
+          this.setBlock(wx, minSurface, wz, topBlock);
+        } else if (surf < minSurface) {
+          for (let y = surf + 1; y <= minSurface; y++) {
+            this.setBlock(wx, y, wz, y === minSurface ? topBlock : fillBlock);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Find the surface height at a given world coordinate.
+   * Scans from top down for the first non-air, non-water block.
+   */
+  _findSurface(wx, wz, maxY) {
+    const startY = maxY !== undefined ? maxY : this._wh - 1;
+    for (let y = startY; y >= 0; y--) {
+      const block = this.getBlock(wx, y, wz);
+      if (block !== BLOCK.AIR && block !== BLOCK.WATER) {
+        return y;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * Place configured prefabs in the world after terrain generation.
+   */
+  _placePrefabs(seed, prefabConfigs, biomeType) {
+    if (!Array.isArray(prefabConfigs)) return;
+
+    for (let ci = 0; ci < prefabConfigs.length; ci++) {
+      const cfg = prefabConfigs[ci];
+      const prefab = getPrefab(cfg.file);
+      if (!prefab) continue;
+
+      // Probability check (deterministic using seed)
+      if (cfg.probability !== undefined) {
+        const probHash = ((seed + 1) * (cfg.file.length + 7)) % 1000 / 1000;
+        if (probHash > cfg.probability) continue;
+      }
+
+      // Determine how many to place (deterministic)
+      const countRange = cfg.maxCount - cfg.minCount;
+      const countOffset = (seed * 7 + ci * 13) % (countRange + 1);
+      const count = cfg.minCount + countOffset;
+      if (count <= 0) continue;
+
+      const [sx, sy, sz] = prefab.size;
+      const margin = Math.max(sx, sz) + 3;
+
+      // Determine valid placement bounds
+      let minWx = margin;
+      let maxWx = this._ww - margin;
+      let minWz = margin;
+      let maxWz = this._wd - margin;
+
+      if (this.useChunks) {
+        // Restrict to initial spawn chunk area
+        const cxc = Math.floor((WORLD_WIDTH / 2) / CHUNK_SIZE);
+        const czc = Math.floor((WORLD_DEPTH / 2) / CHUNK_SIZE);
+        const radius = this.loadRadius || 5;
+        minWx = Math.max(minWx, (cxc - radius) * CHUNK_SIZE + margin);
+        maxWx = Math.min(maxWx, (cxc + radius + 1) * CHUNK_SIZE - margin);
+        minWz = Math.max(minWz, (czc - radius) * CHUNK_SIZE + margin);
+        maxWz = Math.min(maxWz, (czc + radius + 1) * CHUNK_SIZE - margin);
+      }
+
+      if (minWx >= maxWx || minWz >= maxWz) continue;
+
+      for (let i = 0; i < count; i++) {
+        let placed = false;
+        for (let attempt = 0; attempt < 30; attempt++) {
+          // Deterministic pseudo-random position
+          const posSeed = seed * 31 + i * 100 + attempt * (cfg.file.length + 1);
+          const rx = (posSeed * 7) % (maxWx - minWx);
+          const rz = (posSeed * 11 + 37) % (maxWz - minWz);
+          const wx = minWx + rx;
+          const wz = minWz + rz;
+
+          const surfaceY = this._findSurface(wx, wz, 64);
+          if (surfaceY < 1) continue;
+          const surfBlock = this.getBlock(wx, surfaceY, wz);
+          if (surfBlock !== BLOCK.GRASS && surfBlock !== BLOCK.DIRT &&
+              surfBlock !== BLOCK.STONE && surfBlock !== BLOCK.SAND &&
+              surfBlock !== BLOCK.SNOW && surfBlock !== BLOCK.MUD) continue;
+
+          this.placePrefab(prefab, wx, surfaceY, wz, biomeType);
+          placed = true;
+          break;
+        }
+      }
+    }
   }
 
   // === Other World methods ===
