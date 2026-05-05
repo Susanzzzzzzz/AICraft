@@ -1355,6 +1355,21 @@ body {
   .start-content { flex-direction: column; align-items: center; max-width: 400px; }
   .start-left { display: none; }
   #start-screen h1 { font-size: 36px; }
+
+  /* Overflow scroll for tablet landscape (e.g. Android phones 640-768px) */
+  #overlay, #inventory-overlay, #chest-overlay {
+    overflow-y: auto;
+    align-items: flex-start;
+    padding-top: 10px;
+  }
+  #start-screen, #pause-screen, #level-select-screen {
+    overflow-y: visible;
+    max-height: none;
+  }
+  #level-complete-content {
+    max-width: 90vw;
+    min-width: unset;
+  }
 }
 
 /* ===== Responsive: Phone < 480px ===== */
@@ -1479,26 +1494,15 @@ body {
     overflow-y: visible;
     max-height: none;
   }
+  /* Chest narrow screen */
+  #chest-overlay { overflow-y: auto; align-items: flex-start; padding-top: 10px; }
+  .chest-container { min-width: unset; width: 95vw; padding: 8px; }
+  .chest-container h2 { font-size: 16px; margin-bottom: 8px; }
+  .chest-grid { grid-template-columns: repeat(9, 28px); gap: 1px; }
+  .chest-slot { width: 28px; height: 28px; }
   #level-complete-content {
     max-width: 90vw;
     min-width: unset;
-  }
-}
-
-/* ===== Chest narrow screen ===== */
-@media (max-width: 480px) {
-  .chest-container {
-    min-width: unset;
-    width: 95vw;
-    padding: 10px;
-  }
-  .chest-grid {
-    grid-template-columns: repeat(9, 32px);
-    gap: 1px;
-  }
-  .chest-slot {
-    width: 32px;
-    height: 32px;
   }
 }
 
@@ -1587,4 +1591,68 @@ body {
 
 #chest-close-btn:hover {
   background: #8D6E63;
+}
+
+@media (max-width: 768px) {
+  #chest-overlay { overflow-y: auto; align-items: flex-start; padding-top: 10px; }
+  .chest-container { min-width: unset; width: 95vw; padding: 10px; }
+  .chest-grid { grid-template-columns: repeat(9, 32px); gap: 1px; }
+  .chest-slot { width: 32px; height: 32px; }
+}
+
+/* ===== Responsive: Short viewport < 450px (Android landscape) ===== */
+@media (max-height: 450px) and (max-width: 768px) {
+  /* --- Start screen --- */
+  #start-screen, #pause-screen { max-width: 100%; padding: 8px 12px; }
+  #start-screen h1 { font-size: 22px; margin-bottom: 2px; }
+  #start-screen .subtitle { font-size: 11px; margin-bottom: 2px; }
+  .start-content { gap: 8px; }
+  .start-controls { padding: 4px 8px; }
+  .start-control-row { font-size: 10px; line-height: 16px; gap: 6px; }
+  .start-control-row .start-key { min-width: 50px; }
+  #start-btn { padding: 6px 24px; font-size: 14px; }
+  #character-preview-container { display: none; }
+
+  /* --- Pause screen --- */
+  .pause-content { gap: 8px; }
+  .pause-right { display: none; }
+  #pause-screen h1 { font-size: 18px; margin-bottom: 4px; }
+  .role-card { padding: 4px 6px; gap: 4px; }
+  .role-card-avatar { width: 28px; height: 28px; }
+  .role-card-name { font-size: 11px; }
+  .role-card-tag { font-size: 9px; }
+  #pause-actions { gap: 4px; }
+  #pause-actions button { padding: 6px 12px; font-size: 12px; }
+  #pause-volume { gap: 8px; font-size: 10px; flex-wrap: wrap; }
+  #pause-volume input[type="range"] { width: 60px; }
+  #current-role-name { font-size: 12px; padding: 2px 10px; }
+
+  /* --- Inventory --- */
+  .inventory-container { padding: 8px 10px; }
+  .inventory-container h2 { font-size: 16px; margin-bottom: 6px; }
+  .storage-grid { grid-template-columns: repeat(6, 32px); gap: 2px; }
+  .inv-slot, .craft-slot, .craft-result { width: 32px; height: 32px; }
+  .crafting-grid { grid-template-columns: 32px 32px; grid-template-rows: 32px 32px; gap: 2px; }
+  .inventory-layout { gap: 8px; }
+  .page-nav { margin: 3px 0 6px 0; }
+  .page-nav-btn { font-size: 14px; padding: 1px 8px; }
+  .page-nav-indicator { font-size: 11px; }
+  .armor-slot { width: 32px; height: 32px; }
+  .inventory-volume { margin-top: 6px; gap: 8px; font-size: 10px; }
+  .inventory-volume input { width: 60px; }
+
+  /* --- Level select --- */
+  #level-select-screen h1 { font-size: 22px; margin-bottom: 8px; }
+  #level-cards { gap: 6px; }
+  .level-card { padding: 6px 8px; }
+  .level-card-name { font-size: 12px; }
+  .level-card-desc { font-size: 10px; }
+  #level-select-actions { gap: 8px; }
+  #level-select-actions button { padding: 6px 20px; font-size: 12px; }
+
+  /* --- Level complete --- */
+  #level-complete-content { padding: 16px; }
+  #level-complete-content h2 { font-size: 20px; }
+  #level-complete-msg { font-size: 12px; }
+  #level-complete-actions button { padding: 6px 16px; font-size: 12px; }
 }
