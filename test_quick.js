@@ -4,33 +4,29 @@ import { resolve, dirname } from 'path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const htmlPath = resolve(__dirname, 'dist', 'AICraft.html');
 
-async function test() {
-  const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage({ viewport: { width: 732, height: 412 } });
-  page.on('pageerror', err => console.log('PAGE ERROR:', err.message));
+async function testViewport(page, w, h, label) {
+  await page.setViewportSize({ width: w, height: h });
   await page.goto('file://' + htmlPath, { waitUntil: 'load', timeout: 20000 });
   await page.waitForTimeout(1500);
 
-  // === START SCREEN ===
+  const mqActive = await page.evaluate(() => window.matchMedia('(max-height: 450px)').matches);
   const start = await page.evaluate(() => {
     const o = document.querySelector('#overlay');
     const s = document.querySelector('#start-screen');
     const btn = document.querySelector('#start-btn');
     return {
       overlaySH: o.scrollHeight, overlayCH: o.clientHeight,
-      startSH: s.scrollHeight,
       btnFit: btn ? btn.getBoundingClientRect().bottom <= o.clientHeight : false,
       h1: s.querySelector('h1') ? getComputedStyle(s.querySelector('h1')).fontSize : '?',
+      photoHidden: s.querySelector('.start-left') ? getComputedStyle(s.querySelector('.start-left')).display === 'none' : true,
     };
   });
   const startFit = start.overlaySH <= start.overlayCH + 5;
-  console.log(`[START] ${startFit ? 'OK' : 'OVERFLOW'} | ${start.overlaySH}/${start.overlayCH} | btnFits: ${start.btnFit} | h1: ${start.h1}`);
+  console.log(`[${label}] START: ${startFit ? 'OK' : 'OVERFLOW'} ${start.overlaySH}/${start.overlayCH} btn=${start.btnFit} h1=${start.h1} photo=${start.photoHidden} mq450=${mqActive}`);
 
-  // Click start button to enter game
+  // Pause
   await page.click('#start-btn');
   await page.waitForTimeout(1000);
-
-  // === PAUSE SCREEN (Escape to pause game) ===
   await page.keyboard.press('Escape');
   await page.waitForTimeout(300);
   const pause = await page.evaluate(() => {
@@ -38,29 +34,20 @@ async function test() {
     const p = document.querySelector('#pause-screen');
     if (!p || p.classList.contains('hidden')) return null;
     const btn = document.querySelector('#continue-btn');
-    const roleCards = document.querySelectorAll('.role-card');
-    const vol = document.querySelector('#pause-volume');
-    const lastElBottom = Math.max(
-      ...Array.from(o.children).map(el => el.getBoundingClientRect().bottom)
-    );
     return {
       overlaySH: o.scrollHeight, overlayCH: o.clientHeight,
-      pauseSH: p.scrollHeight,
-      contentBottom: lastElBottom,
       btnFit: btn ? btn.getBoundingClientRect().bottom <= o.clientHeight : false,
-      role0Fit: roleCards[0] ? roleCards[0].getBoundingClientRect().bottom <= o.clientHeight : false,
-      volVis: !!vol,
       h1: p.querySelector('h1') ? getComputedStyle(p.querySelector('h1')).fontSize : '?',
     };
   });
   if (pause) {
-    const pauseFit = pause.overlaySH <= pause.overlayCH + 5;
-    console.log(`[PAUSE] ${pauseFit ? 'OK' : 'OVERFLOW'} | ${pause.overlaySH}/${pause.overlayCH} | btnFits: ${pause.btnFit} | roleFits: ${pause.role0Fit} | h1: ${pause.h1} | bottom: ${pause.contentBottom}/${pause.overlayCH}`);
+    const ok = pause.overlaySH <= pause.overlayCH + 5;
+    console.log(`[${label}] PAUSE: ${ok ? 'OK' : 'OVERFLOW'} ${pause.overlaySH}/${pause.overlayCH} btn=${pause.btnFit} h1=${pause.h1}`);
   } else {
-    console.log('[PAUSE] not visible (game may not have started)');
+    console.log(`[${label}] PAUSE: not visible`);
   }
 
-  // === INVENTORY (Escape to close pause, then E for inventory) ===
+  // Inventory
   await page.keyboard.press('Escape');
   await page.waitForTimeout(200);
   await page.keyboard.press('e');
@@ -68,21 +55,24 @@ async function test() {
   const inv = await page.evaluate(() => {
     const i = document.querySelector('#inventory-overlay');
     if (!i || i.classList.contains('hidden')) return null;
-    const container = i.querySelector('.inventory-container');
-    return {
-      invSH: i.scrollHeight, invCH: i.clientHeight,
-      containerSH: container ? container.scrollHeight : 0,
-      containerCH: container ? container.clientHeight : 0,
-      hasGrid: !!i.querySelector('.storage-grid'),
-      hasCrafting: !!i.querySelector('.crafting-grid'),
-    };
+    return { invSH: i.scrollHeight, invCH: i.clientHeight };
   });
   if (inv) {
-    const invFit = inv.invSH <= inv.invCH + 5;
-    console.log(`[INVENTORY] ${invFit ? 'OK' : 'OVERFLOW'} | ${inv.invSH}/${inv.invCH} | container: ${inv.containerSH}/${inv.containerCH}`);
+    const ok = inv.invSH <= inv.invCH + 5;
+    console.log(`[${label}] INVENTORY: ${ok ? 'OK' : 'OVERFLOW'} ${inv.invSH}/${inv.invCH}`);
   } else {
-    console.log('[INVENTORY] not visible');
+    console.log(`[${label}] INVENTORY: not visible`);
   }
+}
+
+async function test() {
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
+  page.on('pageerror', err => console.log('PAGE ERROR:', err.message));
+
+  await testViewport(page, 732, 412, '732x412 Pixel');
+  await testViewport(page, 914, 412, '914x412 S21');
+  await testViewport(page, 480, 360, '480x360 small');
 
   await browser.close();
   console.log('\n验证完成');

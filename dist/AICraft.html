@@ -1609,12 +1609,24 @@ body {
 }
 
 /* ===== Responsive: Short viewport < 450px (Android landscape) ===== */
-@media (max-height: 450px) and (max-width: 768px) {
+@media (max-height: 450px) {
+  /* Universal overlay scroll for short viewports */
+  #overlay, #inventory-overlay, #chest-overlay {
+    overflow-y: auto;
+    align-items: flex-start;
+    padding-top: 10px;
+  }
+  #start-screen, #pause-screen, #level-select-screen {
+    overflow-y: visible;
+    max-height: none;
+  }
+  .start-left { display: none; }
+  #start-screen .subtitle { font-size: 11px; margin-bottom: 2px; }
+
   /* --- Start screen --- */
   #start-screen, #pause-screen { max-width: 100%; padding: 8px 12px; }
   #start-screen h1 { font-size: 22px; margin-bottom: 2px; }
-  #start-screen .subtitle { font-size: 11px; margin-bottom: 2px; }
-  .start-content { gap: 8px; }
+  .start-content { gap: 8px; flex-direction: column; align-items: center; max-width: 100%; }
   .start-controls { padding: 4px 8px; }
   .start-control-row { font-size: 10px; line-height: 16px; gap: 6px; }
   .start-control-row .start-key { min-width: 50px; }
