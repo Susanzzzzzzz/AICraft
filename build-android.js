@@ -288,6 +288,14 @@ export async function buildAndroid() {
 
   writeFileSync(resolve(ANDROID_DIR, 'local.properties'), 'sdk.dir=' + process.env.ANDROID_HOME + '\n');
 
+  console.log('\n=== Cleaning previous build ===');
+  try {
+    execSync('cd "' + ANDROID_DIR + '" && ./gradlew clean 2>&1', { stdio: 'pipe', timeout: 120000 });
+    console.log('  Clean complete');
+  } catch (e) {
+    console.log('  Clean skipped (first build or error): ' + e.message);
+  }
+
   console.log('\n=== Building APK ===');
   chmodSync(resolve(ANDROID_DIR, 'gradlew'), '755');
 
