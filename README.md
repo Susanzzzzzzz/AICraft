@@ -19,7 +19,7 @@
 
 > 🎯 **这不是一个普通的游戏项目** — 从第一行代码到完整的战斗/合成/关卡系统，全部由 **Claude Code + OpenSpec** AI 系统自动生成。作者完全不懂 JavaScript。
 
-📱 **移动优先**：完整触屏操控 + 横屏适配，手机即开即玩
+📱 **全平台支持**：桌面网页 · 移动网页 · **Android APK**，完整触屏操控 + 横屏适配
 ⚔️ **完整玩法**：8 种武器 · 8 种怪物 · 20+ 合成配方 · 6 个关卡
 🎵 **沉浸体验**：程序化 BGM · 15 种音效 · 昼夜循环 · 天气系统
 🔧 **开放源码**：Fork 项目、提交 Issue，AI 自动实现你的想法
@@ -41,7 +41,7 @@
 ## ✨ 核心功能
 
 ### 📱 触屏与移动端
-- 完整触屏操控方案：虚拟摇杆移动、拖拽视角、功能按钮
+- 完整触屏操控方案：虚拟摇杆移动、拖拽视角、功能按钮（支持 Android APK）
 - 自动横屏锁定，自动全屏请求
 - 响应式 UI，从小手机到大平板自适应
 - 触屏背包交互（点击拾取 + 点击放置）
@@ -120,6 +120,20 @@ node build.js
 # 打开构建产物
 open dist/AICraft.html
 ```
+
+## 📋 需求规格文档
+
+项目提供了完整的 OpenSpec 需求规格文档，涵盖所有子系统：
+
+| 文档 | 说明 |
+|------|------|
+| [Mobile Touch](openspec/specs/mobile-touch/spec.md) | 移动端触摸控制、灵敏度配置、按钮布局 |
+| [Voxel World](openspec/specs/voxel-world/spec.md) | 体素世界生成和数据格式 |
+| [Inventory & Crafting](openspec/specs/inventory-crafting/spec.md) | 背包和合成系统 |
+| [Camera & View](openspec/specs/camera-view-controls/spec.md) | 相机控制和视角切换 |
+| [更多...](openspec/specs/) | 总共 15 份规格文档 |
+
+任何人都可以按照这些文档自行搭建游戏。
 
 ## 🏗️ 技术栈
 

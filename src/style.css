@@ -1344,7 +1344,7 @@ body {
 
 /* ===== Responsive: Tablet < 768px ===== */
 @media (max-width: 768px) {
-  #hotbar { bottom: 12px; }
+  #hotbar { bottom: 12px; left: calc(50% - 28px); }
   .hotbar-slot { width: 44px; height: 52px; }
   #skill-bar { bottom: 74px; }
   .skill-slot { width: 32px; height: 32px; font-size: 10px; }
@@ -1359,7 +1359,7 @@ body {
 
 /* ===== Responsive: Phone < 480px ===== */
 @media (max-width: 480px) {
-  #hotbar { bottom: 80px; gap: 2px; }
+  #hotbar { bottom: 80px; gap: 2px; left: calc(50% - 28px); }
   .hotbar-slot { width: 36px; height: 44px; }
   .slot-key { font-size: 8px; }
   .slot-name { font-size: 7px; }
@@ -1400,7 +1400,12 @@ body {
   .pause-left {
     gap: 8px;
   }
+  #pause-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
   #pause-actions button {
+    flex: 0 1 auto;
     padding: 6px 12px;
     font-size: 12px;
   }
@@ -1462,6 +1467,38 @@ body {
   /* Task 4.2: Smaller pause title */
   #pause-screen h1 {
     font-size: 24px;
+  }
+
+  /* Universal overlay scroll */
+  #overlay {
+    overflow-y: auto;
+    align-items: flex-start;
+    padding-top: 10px;
+  }
+  #start-screen, #pause-screen, #level-select-screen {
+    overflow-y: visible;
+    max-height: none;
+  }
+  #level-complete-content {
+    max-width: 90vw;
+    min-width: unset;
+  }
+}
+
+/* ===== Chest narrow screen ===== */
+@media (max-width: 480px) {
+  .chest-container {
+    min-width: unset;
+    width: 95vw;
+    padding: 10px;
+  }
+  .chest-grid {
+    grid-template-columns: repeat(9, 32px);
+    gap: 1px;
+  }
+  .chest-slot {
+    width: 32px;
+    height: 32px;
   }
 }
 

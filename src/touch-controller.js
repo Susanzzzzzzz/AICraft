@@ -20,13 +20,43 @@ export class TouchController {
     this.cameraDrag = { active: false, touchId: null, lastX: 0, lastY: 0 };
 
     // Sensitivity
-    this.cameraSensitivity = 0.5;
+    this.cameraSensitivity = 2.0;
 
     // Action buttons state - track held button timeouts/intervals
     this._heldButtons = {};
 
     // DOM references
     this._dom = {};
+
+    // Sensitivity from localStorage
+    this._loadSensitivity();
+  }
+
+  /**
+   * 从 localStorage 加载保存的灵敏度
+   */
+  _loadSensitivity() {
+    try {
+      const saved = localStorage.getItem('touchSensitivity');
+      if (saved !== null) {
+        this.cameraSensitivity = parseFloat(saved);
+      }
+    } catch (e) {
+      // localStorage 不可用时静默忽略
+    }
+  }
+
+  /**
+   * 设置灵敏度并持久化到 localStorage
+   * @param {number} val
+   */
+  setSensitivity(val) {
+    this.cameraSensitivity = val;
+    try {
+      localStorage.setItem('touchSensitivity', val.toString());
+    } catch (e) {
+      // localStorage 不可用时静默忽略
+    }
   }
 
   /**
@@ -364,29 +394,35 @@ export class TouchController {
   }
 
   /**
-   * 创建操作按钮
+   * 创建操作按钮（菱形布局）
    */
   createActionButtons() {
-    // --- 底部动作行 ---
+    // --- 底部操作区（菱形布局） ---
     const actionRow = document.createElement('div');
     actionRow.className = 'touch-action-row';
     actionRow.style.cssText = `
       position: absolute;
       bottom: 15px;
       right: 15px;
-      transform: none;
-      display: flex;
-      gap: 10px;
-      align-items: center;
+      pointer-events: none;
+      touch-action: none;
+    `;
+
+    const diamond = document.createElement('div');
+    diamond.className = 'touch-action-diamond';
+    diamond.style.cssText = `
+      position: relative;
+      width: min(140px, 22vw);
+      height: min(140px, 22vw);
       pointer-events: none;
       touch-action: none;
     `;
 
     const actionButtons = [
-      { label: '跳', action: 'jump', small: false },
-      { label: '挖', action: 'break', small: false, extraClass: 'touch-btn-break' },
-      { label: '放', action: 'place', small: false, extraClass: 'touch-btn-place' },
-      { label: '闪', action: 'dodge', small: true },
+      { label: '跳', action: 'jump', small: false, position: 'top' },
+      { label: '挖', action: 'break', small: false, extraClass: 'touch-btn-break', position: 'left' },
+      { label: '放', action: 'place', small: false, extraClass: 'touch-btn-place', position: 'right' },
+      { label: '闪', action: 'dodge', small: true, position: 'bottom' },
     ];
 
     for (const btn of actionButtons) {
@@ -394,7 +430,40 @@ export class TouchController {
       el.textContent = btn.label;
       el.dataset.action = btn.action;
 
+      let posStyle = '';
+      switch (btn.position) {
+        case 'top':
+          posStyle = `
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+          `;
+          break;
+        case 'left':
+          posStyle = `
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+          `;
+          break;
+        case 'right':
+          posStyle = `
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+          `;
+          break;
+        case 'bottom':
+          posStyle = `
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+          `;
+          break;
+      }
+
       let btnStyle = `
+        position: absolute;
         pointer-events: auto;
         touch-action: none;
         -webkit-touch-callout: none;
@@ -433,12 +502,14 @@ export class TouchController {
         btnStyle += ` background: rgba(33,150,243,0.4); `;
       }
 
-      el.style.cssText = btnStyle;
-      actionRow.appendChild(el);
+      el.style.cssText = posStyle + btnStyle;
+      diamond.appendChild(el);
     }
 
+    actionRow.appendChild(diamond);
     this.element.appendChild(actionRow);
     this._dom.actionRow = actionRow;
+    this._dom.actionDiamond = diamond;
     this._dom.actionButtons = actionRow.querySelectorAll('button');
 
     // --- 右上角功能按钮 ---

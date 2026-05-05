@@ -1,6 +1,5 @@
 node_modules/
 logs/
-dist/
 .DS_Store
 *.log
 
@@ -22,14 +21,18 @@ test-results/
 package.json
 package-lock.json
 
-# OpenSpec（隐私敏感，不提交）
-openspec/
+# OpenSpec（仅忽略 changes 和 templates）
+openspec/changes/
+openspec/templates/
 
 # VS Code 工作区
 *.code-workspace
 
 # 其他目录
 AI Craft/
+
+# Android SDK 本地安装
+android-sdk/
 
 # Claude Code 个人配置
 .claude/

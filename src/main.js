@@ -117,9 +117,6 @@ class Game {
 
     // Combat system
     this._attackCooldownTimer = 0;
-    this._miningProgress = 0;
-    this._miningTarget = null;
-    this._miningBlockType = 0;
     this._projectVector = new THREE.Vector3();
     this._lastSkillUseTime = 0;
     this._poisonTimer = 0;
@@ -404,6 +401,13 @@ class Game {
     });
     document.getElementById('pause-sfx-volume').addEventListener('input', (e) => {
       this.audioManager.setSFXVolume(parseFloat(e.target.value));
+    });
+
+    // Pause screen sensitivity control
+    document.getElementById('pause-sensitivity').addEventListener('input', (e) => {
+      if (this.touchController) {
+        this.touchController.setSensitivity(parseFloat(e.target.value));
+      }
     });
 
     // Continue button (pause screen)
@@ -856,6 +860,12 @@ class Game {
 
     // Hide touch controls when paused
     if (this.touchController) this.touchController.hide();
+
+    // Sync sensitivity slider with current value
+    const sensSlider = document.getElementById('pause-sensitivity');
+    if (sensSlider && this.touchController) {
+      sensSlider.value = this.touchController.cameraSensitivity.toString();
+    }
   }
 
   _toggleInventory() {
@@ -1544,7 +1554,13 @@ class Game {
       }
     }
     this.dropItems = this.dropItems.filter(d => !d.collected);
-    this.hostiles = this.hostiles.filter(m => !m.dead);
+    this.hostiles = this.hostiles.filter(m => {
+      if (m.dead) {
+        m._disposeNameTag();
+        this.renderer.scene.remove(m.group);
+      }
+      return !m.dead;
+    });
 
     // Update flying arrows
     this.diagnostics.beginPhase('arrows');
@@ -1677,7 +1693,7 @@ class Game {
 
     const rayOrigin = this.cameraCtrl.getRaycastOrigin(this.player);
     const rayDir = this.cameraCtrl.getRaycastDirection(this.input);
-    const rayDist = this.cameraCtrl.isGodMode() ? 60 : 8;
+    const rayDist = this.cameraCtrl.isGodMode() ? 60 : 12;
     const hitResult = raycast(rayOrigin, rayDir, (x, y, z) => this.world.getBlock(x, y, z), rayDist);
 
     if (hitResult.hit) {
@@ -1740,10 +1756,9 @@ class Game {
     // Auto-repeat break/attack when left mouse is held (desktop continuous mining)
     if (this.input.mouseButtons[0] && !this._bowCharging && this.uiState === "gameplay") {
       this._autoMineTimer += dt;
-      if (this._autoMineTimer >= 0.15) {
+      if (this._autoMineTimer >= 0.1) {
         this._autoMineTimer = 0;
         this.input._actions.push("break");
-        this.input._actions.push("attack");
       }
     } else {
       this._autoMineTimer = 0;
@@ -1753,66 +1768,21 @@ class Game {
     this._attackCooldownTimer -= dt;
     if (this._attackCooldownTimer < 0) this._attackCooldownTimer = 0;
 
-    let attacked = false;
+    // 攻击检测 - 独立进行
     if (this.input.consumeAction('attack')) {
       const mobHit = this._findEntityInCrosshair(4);
       if (mobHit && this._attackCooldownTimer <= 0) {
         this._performAttack(mobHit);
-        attacked = true;
       }
     }
 
-    // Handle break action (with mining animation) — skipped if attack was performed
-    // Handle break action with tool-speed-based mining
-    if (!attacked && hitResult.hit && !this.steveModel.isAnimating()) {
+    // 破坏检测 - 独立进行，不再依赖 attacked
+    if (this.input.consumeAction('break') && hitResult.hit) {
       const [bx, by, bz] = hitResult.position;
       const blockType = this.world.getBlock(bx, by, bz);
       if (blockType !== BLOCK.WATER && blockType !== BLOCK.AIR && by > 0) {
-        if (this.input.consumeAction('break')) {
-          // Check if clicking a new block
-          if (!this._miningTarget || this._miningTarget[0] !== bx || this._miningTarget[1] !== by || this._miningTarget[2] !== bz) {
-            this._miningTarget = [bx, by, bz];
-            this._miningBlockType = blockType;
-            this._miningProgress = 0;
-          }
-              const selectedItem = this.inventory.getSelectedItem();
-          const toolId = selectedItem ? selectedItem.type : 0;
-          const speed = (toolId >= 114 && toolId <= 125) ? getToolSpeed(toolId, blockType) : 1.0;
-          this._miningProgress += speed * 0.3;
-          if (this._miningProgress >= 1.0) {
-            this.steveModel.triggerAnimation('mining', () => {
-              // Drop chest contents before removing
-              if (blockType === BLOCK.CHEST) {
-                const slots = this.world.getChestInv(bx, by, bz);
-                if (slots) {
-                  for (let i = 0; i < slots.length; i++) {
-                    if (slots[i]) {
-                      const dropItem = new DropItem(this.renderer.scene,
-                        [bx + 0.5, by + 0.5, bz + 0.5],
-                        slots[i].type, slots[i].count);
-                      this.dropItems.push(dropItem);
-                    }
-                  }
-                }
-                this.world.removeChest(bx, by, bz);
-              }
-              this.world.setBlock(bx, by, bz, BLOCK.AIR);
-              this.inventory.addItem(getBlockDrop(blockType), 1);
-              this.audioManager.playSFX('break');
-            });
-            // Spawn destruction particles at the broken block position
-            this.renderer.spawnDestructionParticles([bx, by, bz], BLOCK_COLORS[this._miningBlockType] || 0x888888);
-            this._miningTarget = null;
-            this._miningProgress = 0;
-          }
-        }
-      } else {
-        this._miningTarget = null;
-        this._miningProgress = 0;
+        this._instantBreak(bx, by, bz, blockType);
       }
-    } else {
-      this._miningTarget = null;
-      this._miningProgress = 0;
     }
 
     } // end !_bowCharging (skip attack/break when charging bow)
@@ -2243,6 +2213,7 @@ class Game {
     // Generate world with config object
     const genConfig = { biomeType: variant.biomeType || 'plains' };
     if (variant.waterLevel !== undefined) genConfig.waterLevel = variant.waterLevel;
+    if (variant.prefabs) genConfig.prefabs = variant.prefabs;
     this.world.generate(seed, genConfig);
 
     // Spawn animals
@@ -2476,6 +2447,7 @@ class Game {
         const dx = mob.position[0] - px, dz = mob.position[2] - pz;
         if (dx * dx + dz * dz < SAFE_RADIUS * SAFE_RADIUS) {
           this.renderer.scene.remove(mob.group);
+          mob._disposeNameTag();
           mob.dead = true;
         }
       }
@@ -2589,6 +2561,27 @@ class Game {
     if (mob.dead) {
       this._handleMobDeath(mob);
     }
+  }
+
+  _instantBreak(bx, by, bz, blockType) {
+    if (blockType === BLOCK.CHEST) {
+      const slots = this.world.getChestInv(bx, by, bz);
+      if (slots) {
+        for (let i = 0; i < slots.length; i++) {
+          if (slots[i]) {
+            const dropItem = new DropItem(this.renderer.scene,
+              [bx + 0.5, by + 0.5, bz + 0.5],
+              slots[i].type, slots[i].count);
+            this.dropItems.push(dropItem);
+          }
+        }
+      }
+      this.world.removeChest(bx, by, bz);
+    }
+    this.world.setBlock(bx, by, bz, BLOCK.AIR);
+    this.inventory.addItem(getBlockDrop(blockType), 1);
+    this.renderer.spawnDestructionParticles([bx, by, bz], BLOCK_COLORS[blockType] || 0x888888);
+    this.audioManager.playSFX('break');
   }
 
   // Handle mob death: drops and sounds
