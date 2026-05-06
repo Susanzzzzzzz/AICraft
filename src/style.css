@@ -960,7 +960,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 180px;
+  min-width: clamp(120px, 20vmin, 180px);
 }
 
 #level-header {
@@ -971,7 +971,7 @@ body {
 
 #level-name {
   font-weight: bold;
-  font-size: 14px;
+  font-size: clamp(11px, 1.5vmin, 14px);
 }
 
 #level-tasks {
@@ -1716,6 +1716,45 @@ body {
   #level-complete-content h2 { font-size: 20px; }
   #level-complete-msg { font-size: 12px; }
   #level-complete-actions button { padding: 6px 16px; font-size: 12px; }
+
+  /* --- HUD elements for short viewports (landscape phones) --- */
+  #top-info {
+    gap: 6px;
+    top: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 2px clamp(4px, 1vmin, 8px);
+  }
+  .top-info-item {
+    padding: 2px 4px;
+    font-size: clamp(8px, 1.5vmin, 11px);
+  }
+  #level-info {
+    top: 26px;
+    min-width: unset;
+    padding: 2px 6px;
+    font-size: clamp(8px, 1.2vmin, 11px);
+  }
+  #level-name {
+    font-size: clamp(10px, 1.5vmin, 12px);
+  }
+  #level-tasks {
+    font-size: clamp(9px, 1.2vmin, 11px);
+  }
+  #hotbar {
+    bottom: 6px;
+    gap: 2px;
+  }
+  .hotbar-slot {
+    width: clamp(26px, 4vmin, 40px);
+    height: clamp(32px, 5vmin, 52px);
+  }
+  #skill-bar {
+    bottom: 66px;
+  }
+  #task-panel {
+    bottom: clamp(56px, 8vmin, 76px);
+  }
 }
 
 /* ===== Touch-only elements (hidden on devices with hover/pointer) ===== */

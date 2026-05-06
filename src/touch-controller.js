@@ -137,6 +137,7 @@ export class TouchController {
       this.element.style.display = 'block';
     }
     this.active = true;
+    document.body.classList.add('touch-mode');
     if (this.input && typeof this.input.setTouchMode === 'function') {
       this.input.setTouchMode(true);
     } else if (this.input) {
@@ -152,6 +153,7 @@ export class TouchController {
       this.element.style.display = 'none';
     }
     this.active = false;
+    document.body.classList.remove('touch-mode');
     if (this.input && typeof this.input.setTouchMode === 'function') {
       this.input.setTouchMode(false);
     } else if (this.input) {

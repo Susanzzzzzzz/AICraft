@@ -968,7 +968,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 180px;
+  min-width: clamp(120px, 20vmin, 180px);
 }
 
 #level-header {
@@ -979,7 +979,7 @@ body {
 
 #level-name {
   font-weight: bold;
-  font-size: 14px;
+  font-size: clamp(11px, 1.5vmin, 14px);
 }
 
 #level-tasks {
@@ -1724,6 +1724,45 @@ body {
   #level-complete-content h2 { font-size: 20px; }
   #level-complete-msg { font-size: 12px; }
   #level-complete-actions button { padding: 6px 16px; font-size: 12px; }
+
+  /* --- HUD elements for short viewports (landscape phones) --- */
+  #top-info {
+    gap: 6px;
+    top: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 2px clamp(4px, 1vmin, 8px);
+  }
+  .top-info-item {
+    padding: 2px 4px;
+    font-size: clamp(8px, 1.5vmin, 11px);
+  }
+  #level-info {
+    top: 26px;
+    min-width: unset;
+    padding: 2px 6px;
+    font-size: clamp(8px, 1.2vmin, 11px);
+  }
+  #level-name {
+    font-size: clamp(10px, 1.5vmin, 12px);
+  }
+  #level-tasks {
+    font-size: clamp(9px, 1.2vmin, 11px);
+  }
+  #hotbar {
+    bottom: 6px;
+    gap: 2px;
+  }
+  .hotbar-slot {
+    width: clamp(26px, 4vmin, 40px);
+    height: clamp(32px, 5vmin, 52px);
+  }
+  #skill-bar {
+    bottom: 66px;
+  }
+  #task-panel {
+    bottom: clamp(56px, 8vmin, 76px);
+  }
 }
 
 /* ===== Touch-only elements (hidden on devices with hover/pointer) ===== */
@@ -5851,7 +5890,7 @@ void main() {
       z-index: 60;
       pointer-events: none;
       touch-action: none;
-    `,this.element=container,this._dom.container=container,this.createJoystick(),this.createCameraDrag(),this.createActionButtons(),document.body.appendChild(container),this.hide()}destroy(){this.element&&this.element.parentNode&&this.element.parentNode.removeChild(this.element),this.element=null,this._dom={},this.joystick={dx:0,dy:0,touchId:null},this.cameraDrag={active:!1,touchId:null,lastX:0,lastY:0};for(let key of Object.keys(this._heldButtons))this._heldButtons[key]&&clearInterval(this._heldButtons[key]);this._heldButtons={},this.active=!1}show(){this.element&&(this.element.style.display="block"),this.active=!0,this.input&&typeof this.input.setTouchMode=="function"?this.input.setTouchMode(!0):this.input&&(this.input._touchMode=!0)}hide(){this.element&&(this.element.style.display="none"),this.active=!1,this.input&&typeof this.input.setTouchMode=="function"?this.input.setTouchMode(!1):this.input&&(this.input._touchMode=!1)}update(){}updateFlightButtons(isFlying){let flightBtns=this.element?this.element.querySelectorAll(".flight-only"):[];for(let btn of flightBtns)btn.style.display=isFlying?"flex":"none"}createJoystick(){let area=document.createElement("div");area.className="touch-joystick-area",area.style.cssText=`
+    `,this.element=container,this._dom.container=container,this.createJoystick(),this.createCameraDrag(),this.createActionButtons(),document.body.appendChild(container),this.hide()}destroy(){this.element&&this.element.parentNode&&this.element.parentNode.removeChild(this.element),this.element=null,this._dom={},this.joystick={dx:0,dy:0,touchId:null},this.cameraDrag={active:!1,touchId:null,lastX:0,lastY:0};for(let key of Object.keys(this._heldButtons))this._heldButtons[key]&&clearInterval(this._heldButtons[key]);this._heldButtons={},this.active=!1}show(){this.element&&(this.element.style.display="block"),this.active=!0,document.body.classList.add("touch-mode"),this.input&&typeof this.input.setTouchMode=="function"?this.input.setTouchMode(!0):this.input&&(this.input._touchMode=!0)}hide(){this.element&&(this.element.style.display="none"),this.active=!1,document.body.classList.remove("touch-mode"),this.input&&typeof this.input.setTouchMode=="function"?this.input.setTouchMode(!1):this.input&&(this.input._touchMode=!1)}update(){}updateFlightButtons(isFlying){let flightBtns=this.element?this.element.querySelectorAll(".flight-only"):[];for(let btn of flightBtns)btn.style.display=isFlying?"flex":"none"}createJoystick(){let area=document.createElement("div");area.className="touch-joystick-area",area.style.cssText=`
       position: absolute;
       left: 0;
       bottom: 0;

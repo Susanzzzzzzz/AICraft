@@ -43,7 +43,7 @@ class MainActivity : AppCompatActivity() {
                 builtInZoomControls = false
                 displayZoomControls = false
                 setSupportZoom(false)
-                layoutAlgorithm = WebSettings.LayoutAlgorithm.NARROW_COLUMNS
+                layoutAlgorithm = WebSettings.LayoutAlgorithm.TEXT_AUTOSIZING
                 mediaPlaybackRequiresUserGesture = false
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     safeBrowsingEnabled = false
