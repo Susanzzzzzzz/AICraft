@@ -31,8 +31,10 @@
 - All tool usage
 
 # 构建规则
-- 每次修改代码后必须执行 `node build.js`
-- 构建生成单个合并 HTML 文件到 `dist/AICraft.html`
+- 每次修改代码后，必须重新编译网页端和安卓端：
+  1. 网页端：`node build.js` → 生成 `dist/AICraft.html`
+  2. 安卓端：`node build.js android` → 生成 `dist/AICraft.apk`
+- 依次执行：先 `node build.js`，再 `node build.js android`
 - 构建产物为纯静态文件，无需服务器即可在浏览器打开
 
 # 语言规则

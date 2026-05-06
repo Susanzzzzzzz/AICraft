@@ -48,7 +48,6 @@ export class Renderer {
     this._breakOverlay = null;
     this._breakProgressBar = null;
     this._breakProgressFill = null;
-    this._initBreakVisuals();
   }
 
   _initBreakVisuals() {
@@ -169,6 +168,9 @@ export class Renderer {
     this.scene.add(this.directionalLight);
 
     this.blockGeometry = new THREE.BoxGeometry(1, 1, 1);
+
+    // Initialize break progress visuals (requires scene to exist)
+    this._initBreakVisuals();
 
     // Block highlight
     const highlightGeo = new THREE.BoxGeometry(1.005, 1.005, 1.005);

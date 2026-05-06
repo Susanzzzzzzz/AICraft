@@ -88,7 +88,13 @@ export class HUD {
     this.skillNameDisplay = document.getElementById('skill-name');
     this.levelNameDisplay = document.getElementById('level-name');
     this.levelTasksDisplay = document.getElementById('level-tasks');
+    this._taskListEl = document.getElementById('level-task-list');
     this.helpPanel = document.getElementById('help-panel');
+    // Cache frequently-queried elements (hot path)
+    this._armorValueEl = document.getElementById('armor-value');
+    this._blockOverlayEl = document.getElementById('block-overlay');
+    this._bowChargeContainerEl = document.getElementById('bow-charge-container');
+    this._bowChargeFillEl = document.getElementById('bow-charge-fill');
   }
 
   showDamageNumber(screenX, screenY, damage, isPlayerDamage) {
@@ -151,25 +157,21 @@ export class HUD {
       this.armorDisplay.textContent = armorDefense > 0 ? "⚔️ 盔甲" + armorDefense + "点" : "";
     }
     // Update armor bar in top-info
-    const armorValueEl = document.getElementById('armor-value');
-    if (armorValueEl) {
-      armorValueEl.textContent = armorDefense || 0;
+    if (this._armorValueEl) {
+      this._armorValueEl.textContent = armorDefense || 0;
     }
 
     // Blocking indicator
-    const blockOverlay = document.getElementById('block-overlay');
-    if (blockOverlay) {
-      blockOverlay.classList.toggle('active', blocking);
+    if (this._blockOverlayEl) {
+      this._blockOverlayEl.classList.toggle('active', blocking);
     }
 
     // Bow charge indicator
-    const bowChargeContainer = document.getElementById('bow-charge-container');
-    if (bowChargeContainer) {
-      bowChargeContainer.style.display = bowChargePercent > 0 ? 'block' : 'none';
+    if (this._bowChargeContainerEl) {
+      this._bowChargeContainerEl.style.display = bowChargePercent > 0 ? 'block' : 'none';
     }
-    const bowFill = document.getElementById('bow-charge-fill');
-    if (bowFill) {
-      bowFill.style.width = (bowChargePercent * 100) + '%';
+    if (this._bowChargeFillEl) {
+      this._bowChargeFillEl.style.width = (bowChargePercent * 100) + '%';
     }
 
     // Update hotbar selection and dynamic content
@@ -286,7 +288,35 @@ export class HUD {
     if (this.levelTasksDisplay && levelProgress) {
       const done = levelProgress.filter(t => t.done).length;
       const total = levelProgress.length;
-      this.levelTasksDisplay.textContent = ` ${done}/${total}`;
+      this.levelTasksDisplay.textContent = `${done}/${total}`;
+    }
+    // Update task list preview: individual task items with status
+    if (this._taskListEl && levelProgress) {
+      this._taskListEl.innerHTML = '';
+      for (const task of levelProgress) {
+        const item = document.createElement('div');
+        item.className = 'task-item';
+        if (task.done) item.classList.add('task-done');
+        if (task.optional) item.classList.add('task-optional');
+
+        const icon = document.createElement('span');
+        icon.className = 'task-icon';
+        icon.textContent = task.done ? '☑' : '☐';
+
+        const desc = document.createElement('span');
+        desc.className = 'task-desc';
+        desc.textContent = task.description;
+
+        const prog = document.createElement('span');
+        prog.className = 'task-progress';
+        prog.textContent = `${task.current}/${task.count}`;
+
+        item.appendChild(icon);
+        item.appendChild(desc);
+        item.appendChild(prog);
+        this._taskListEl.appendChild(item);
+      }
+      this._taskListEl.classList.toggle('hidden', levelProgress.length === 0);
     }
   }
 

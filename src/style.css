@@ -948,19 +948,85 @@ body {
   transform: translateX(-50%);
   z-index: 50;
   pointer-events: none;
-  display: flex;
-  gap: 10px;
   font-size: 13px;
   color: #fff;
   text-shadow: 0 0 3px #000;
-  background: rgba(0,0,0,0.4);
-  padding: 4px 12px;
-  border-radius: 4px;
+  background: rgba(0,0,0,0.5);
+  padding: 6px 12px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 180px;
+}
+
+#level-header {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+#level-name {
+  font-weight: bold;
+  font-size: 14px;
 }
 
 #level-tasks {
   color: #aaa;
   font-size: 12px;
+}
+
+/* 任务列表 */
+#level-task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  padding-top: 4px;
+  margin-top: 2px;
+}
+
+.task-item {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #ddd;
+}
+
+.task-item.task-done {
+  color: #8f8;
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.task-item.task-optional {
+  opacity: 0.6;
+}
+
+.task-icon {
+  flex: 0 0 auto;
+  font-size: 11px;
+}
+
+.task-desc {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-progress {
+  flex: 0 0 auto;
+  color: #aaa;
+  font-size: 10px;
+  margin-left: auto;
+}
+
+.task-done .task-progress {
+  color: #8f8;
 }
 
 /* ===== 浮动伤害数字 ===== */
@@ -1393,7 +1459,7 @@ body {
   #debug-info { font-size: 10px; }
   #top-info { gap: 8px; }
   .top-info-item { font-size: 11px; padding: 2px 6px; }
-  #level-info { font-size: 11px; padding: 2px 8px; top: 36px; }
+  #level-info { font-size: 11px; padding: 4px 8px; top: 36px; }
   #crosshair { font-size: 22px; }
   #typing-display { font-size: 13px; bottom: 8px; left: 8px; padding: 6px 10px; }
 

@@ -164,6 +164,12 @@ class Game {
 
     // Diagnostics (F3 toggle)
     this.diagnostics = new Diagnostics(this);
+
+    // Cached DOM element references (hot path)
+    this._errorOverlayEl = null;
+    this._suggestionEl = null;
+    this._bowChargeContainerEl = null;
+    this._bowChargeFillEl = null;
   }
 
   init() {
@@ -1236,7 +1242,10 @@ class Game {
   }
 
   _showError(err) {
-    const el = document.getElementById('error-overlay');
+    if (!this._errorOverlayEl) {
+      this._errorOverlayEl = document.getElementById('error-overlay');
+    }
+    const el = this._errorOverlayEl;
     if (el) {
       el.style.display = 'block';
       el.textContent = '[' + new Date().toLocaleTimeString() + '] ' + (err.message || String(err)) + '\n' + (err.stack ? err.stack.split('\n').slice(0, 4).join('\n') : '');
@@ -1758,7 +1767,9 @@ class Game {
       } else if (this._bowCharging) {
         // Release arrow
         this._bowCharging = false;
-        document.getElementById('bow-charge-container').style.display = 'none';
+        if (this._bowChargeContainerEl) {
+          this._bowChargeContainerEl.style.display = 'none';
+        }
         if (this.inventory.hasItem(ITEM.ARROW, 1)) {
           this.inventory.removeItem(ITEM.ARROW, 1);
           this._fireArrow(this._bowChargeTime);
@@ -1768,13 +1779,22 @@ class Game {
     } else if (this._bowCharging) {
       this._bowCharging = false;
       this._bowChargeTime = 0;
-      document.getElementById('bow-charge-container').style.display = 'none';
+      if (this._bowChargeContainerEl) {
+        this._bowChargeContainerEl.style.display = 'none';
+      }
     }
     // Update bow charge UI
     if (this._bowCharging) {
-      const cFill = document.getElementById('bow-charge-fill');
-      if (cFill) cFill.style.width = Math.min(this._bowChargeTime / 1.5, 1.0) * 100 + '%';
-      document.getElementById('bow-charge-container').style.display = 'block';
+      if (!this._bowChargeFillEl) {
+        this._bowChargeContainerEl = document.getElementById('bow-charge-container');
+        this._bowChargeFillEl = document.getElementById('bow-charge-fill');
+      }
+      if (this._bowChargeFillEl) {
+        this._bowChargeFillEl.style.width = Math.min(this._bowChargeTime / 1.5, 1.0) * 100 + '%';
+      }
+      if (this._bowChargeContainerEl) {
+        this._bowChargeContainerEl.style.display = 'block';
+      }
     }
 
     // Handle attack (left-click entity detection, prioritized over block breaking)
@@ -2059,10 +2079,12 @@ class Game {
     this.characterPreview.hide();
 
     // Show touch controls when resuming
-    if (this.touchController) this.touchController.show();
-	      // Lock to landscape on mobile
-	      screen.orientation?.lock?.('landscape')?.catch(() => {})
+    if (this.touchController) {
+      this.touchController.show();
+      // Lock to landscape on mobile
+      screen.orientation?.lock?.('landscape')?.catch(() => {});
       this.hud.setTouchMode(true);
+    }
   }
 
   // ===== Role System =====
@@ -2737,23 +2759,26 @@ class Game {
 
   // Show AI suggestion in semi-auto mode
   _showAISuggestion(text) {
-    let el = document.getElementById('ai-suggestion');
+    if (!this._suggestionEl) {
+      this._suggestionEl = document.getElementById('ai-suggestion');
+      if (!this._suggestionEl) {
+        this._suggestionEl = document.createElement('div');
+        this._suggestionEl.id = 'ai-suggestion';
+        document.body.appendChild(this._suggestionEl);
+      }
+    }
     if (!text) {
-      if (el) el.classList.add('hidden');
+      this._suggestionEl.classList.add('hidden');
       return;
     }
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'ai-suggestion';
-      document.body.appendChild(el);
-    }
-    el.textContent = text;
-    el.classList.remove('hidden');
+    this._suggestionEl.textContent = text;
+    this._suggestionEl.classList.remove('hidden');
   }
 
   _hideAISuggestion() {
-    const el = document.getElementById('ai-suggestion');
-    if (el) el.classList.add('hidden');
+    if (this._suggestionEl) {
+      this._suggestionEl.classList.add('hidden');
+    }
   }
 
   // ===== Combat System Expansion Methods =====
@@ -3092,8 +3117,13 @@ try {
     const screen = document.getElementById('start-screen');
     if (screen) {
       screen.querySelector('h1').textContent = '❌ 加载失败';
-      screen.querySelector('p').textContent = err.message;
-      screen.querySelector('button').style.display = 'none';
+      const errMsg = document.createElement('p');
+      errMsg.style.cssText = 'color:#f44;font-size:12px;margin:4px 0';
+      errMsg.textContent = err.message;
+      screen.querySelector('.start-controls').after(errMsg);
+      const btn = screen.querySelector('button');
+      btn.textContent = '↻ 重试';
+      btn.onclick = () => location.reload();
     }
   }
 }
