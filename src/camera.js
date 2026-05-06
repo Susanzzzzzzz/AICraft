@@ -29,6 +29,14 @@ export class CameraController {
     this._fpWeaponGroup.position.set(0.35, -0.38, -0.8);
     this._fpWeaponGroup.rotation.z = 0.1;
     this.camera.add(this._fpWeaponGroup);
+
+    // FP swing animation state
+    this._fpSwingState = { active: false, time: 0, duration: 0.35 };
+  }
+
+  triggerFpSwing() {
+    this._fpSwingState.active = true;
+    this._fpSwingState.time = 0;
   }
 
   setFirstPersonWeapon(weaponId) {
@@ -86,7 +94,28 @@ export class CameraController {
     }
   }
 
-  update(player, input, steveModel) {
+  update(player, input, steveModel, dt) {
+    // Update FP swing animation
+    if (this._fpSwingState.active) {
+      this._fpSwingState.time += dt || 0;
+      const t = this._fpSwingState.time;
+      const d = this._fpSwingState.duration;
+      let rotX = 0;
+      if (t < 0.12) {
+        rotX = -(t / 0.12) * 0.5;
+      } else if (t < 0.25) {
+        const p = (t - 0.12) / 0.13;
+        rotX = -0.5 + p * 1.7;
+      } else if (t < d) {
+        const p = (t - 0.25) / (d - 0.25);
+        rotX = 1.2 * (1 - p);
+      } else {
+        rotX = 0;
+        this._fpSwingState.active = false;
+      }
+      this._fpWeaponGroup.rotation.x = rotX;
+    }
+
     const eyePos = player.getEyePosition();
     const forward = input.getForward();
     const yaw = input.yaw;

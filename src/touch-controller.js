@@ -161,6 +161,17 @@ export class TouchController {
   }
 
   /**
+   * 控制飞行上下按钮的显示/隐藏
+   * @param {boolean} isFlying
+   */
+  updateFlightButtons(isFlying) {
+    const flightBtns = this.element ? this.element.querySelectorAll('.flight-only') : [];
+    for (const btn of flightBtns) {
+      btn.style.display = isFlying ? 'flex' : 'none';
+    }
+  }
+
+  /**
    * 创建摇杆
    */
   createJoystick() {
@@ -513,12 +524,42 @@ export class TouchController {
     this._dom.actionButtons = actionRow.querySelectorAll('button');
 
     // --- 右上角功能按钮 ---
+    // 背包按钮 — 独立到右上角
+    const invBtn = document.createElement('button');
+    invBtn.className = 'touch-btn-inventory';
+    invBtn.textContent = '🎒';
+    invBtn.dataset.action = 'interact';
+    invBtn.style.cssText = `
+      position: absolute;
+      right: 10px;
+      top: 60px;
+      width: min(44px, 7vw);
+      height: min(44px, 7vw);
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: #fff;
+      font-size: min(20px, 3vw);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      touch-action: none;
+      cursor: default;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    `;
+    this.element.appendChild(invBtn);
+    this._dom.invBtn = invBtn;
+
+    // 功能行：武器 + 飞行 + ↑↓
     const funcRow = document.createElement('div');
     funcRow.className = 'touch-function-row';
     funcRow.style.cssText = `
       position: absolute;
       right: 8px;
-      top: 60px;
+      top: 110px;
       display: flex;
       flex-wrap: wrap;
       width: 140px;
@@ -529,21 +570,17 @@ export class TouchController {
     `;
 
     const funcButtons = [
-      { label: '交互', action: 'interact' },
-      { label: '技能', action: 'skillUseExplore' },
-      { label: '切换', action: 'skillCycleExplore' },
       { label: '武器', action: 'weaponSwitch' },
       { label: '飞行', action: 'flight' },
-      { label: '↑', action: ACTION_ASCEND },
-      { label: '↓', action: ACTION_DESCEND },
-      { label: '视角', action: 'toggleCamera' },
-      { label: '帮助', action: 'help' },
+      { label: '↑', action: ACTION_ASCEND, extraClass: 'flight-only' },
+      { label: '↓', action: ACTION_DESCEND, extraClass: 'flight-only' },
     ];
 
     for (const btn of funcButtons) {
       const el = document.createElement('button');
       el.textContent = btn.label;
       el.dataset.action = btn.action;
+      if (btn.extraClass) el.classList.add(btn.extraClass);
       el.style.cssText = `
         width: min(36px, 6vw);
         height: min(36px, 6vw);
@@ -563,6 +600,9 @@ export class TouchController {
         -webkit-user-select: none;
         user-select: none;
       `;
+      if (btn.extraClass === 'flight-only') {
+        el.style.display = 'none';
+      }
       funcRow.appendChild(el);
     }
 
@@ -641,16 +681,8 @@ export class TouchController {
     switch (action) {
       case 'break':
         this.input.mouseButtons[0] = true;
-        this.input._actions.push('break');
+        this._breakHeldByTouch = true;
         this.input._actions.push('attack');
-        // 启动 held 间隔
-        if (this._heldButtons['break']) {
-          clearInterval(this._heldButtons['break']);
-        }
-        this._heldButtons['break'] = setInterval(() => {
-          this.input._actions.push('break');
-          this.input._actions.push('attack');
-        }, 200);
         break;
 
       case 'place':
@@ -721,10 +753,7 @@ export class TouchController {
     switch (action) {
       case 'break':
         this.input.mouseButtons[0] = false;
-        if (this._heldButtons['break']) {
-          clearInterval(this._heldButtons['break']);
-          delete this._heldButtons['break'];
-        }
+        this._breakHeldByTouch = false;
         break;
 
       case 'place':

@@ -1,0 +1,25 @@
+{
+  "name": "樱花亭",
+  "description": "木柱与树叶顶的凉亭",
+  "size": [
+    7,
+    5,
+    7
+  ],
+  "tags": [
+    "building",
+    "cherry",
+    "plains"
+  ],
+  "palette": {
+    "w": 4,
+    "l": 7
+  },
+  "data": [
+    "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+    "w     w                                   w     w",
+    "w     w                                   w     w",
+    "lllllllllllllllllllllllllllllllllllllllllllllllll",
+    "lllllllllllllllllllllllllllllllllllllllllllllllll"
+  ]
+}

@@ -1,6 +1,6 @@
 // AICraft — Main game entry point
 import * as THREE from 'three';
-import { World, BLOCK, ITEM, ITEM_NAMES, WORLD_WIDTH, WORLD_HEIGHT, WORLD_DEPTH, BLOCK_COLORS, MAX_BLOCK_TYPE, getBlockDrop } from './world.js';
+import { World, BLOCK, ITEM, ITEM_NAMES, WORLD_WIDTH, WORLD_HEIGHT, WORLD_DEPTH, BLOCK_COLORS, MAX_BLOCK_TYPE, getBlockDrop, BLOCK_HARDNESS } from './world.js';
 import { Renderer } from './renderer.js';
 import { Player } from './player.js';
 import { Input, parseCommand } from './input.js';
@@ -155,6 +155,13 @@ class Game {
     // Auto-mine repeat timer (for held left-click)
     this._autoMineTimer = 0;
 
+    // Block breaking progress state (null | { x, y, z, progress, total })
+    this._breaking = null;
+    this._breakHeldByTouch = false;
+
+    // Touch inventory selection state
+    this._touchSelectedSlot = null; // { type: 'storage'|'hotbar', index: number }
+
     // Diagnostics (F3 toggle)
     this.diagnostics = new Diagnostics(this);
   }
@@ -190,9 +197,13 @@ class Game {
 
     // Listen for hotbar touch selection from HUD
     document.addEventListener('hotbar-touch-select', (e) => {
-      const blockType = e.detail.type;
-      if (blockType >= 1 && blockType <= 8) {
-        this.input.selectedBlock = blockType;
+      const index = e.detail.index;
+      if (index >= 0 && index < 8) {
+        this.inventory.selectedSlot = index;
+        const item = this.inventory.hotbar[index];
+        if (item && item.type >= 1 && item.type <= MAX_BLOCK_TYPE) {
+          this.input.selectedBlock = item.type;
+        }
       }
     });
 
@@ -205,10 +216,13 @@ class Game {
       this.touchController = new TouchController(this.input);
       this.touchController.init();
       this.touchController.show();
-	      // Lock to landscape on mobile (Promise-based API，需 .catch 否则触发 unhandledrejection)
-	      screen.orientation?.lock?.('landscape')?.catch(() => {});
       this.hud.setTouchMode(true);
+      // Lock to landscape on mobile (Promise-based API，需 .catch 否则触发 unhandledrejection)
+      screen.orientation?.lock?.('landscape')?.catch(() => {});
     }
+
+    // Set inventory reference in HUD for dynamic hotbar rendering
+    this.hud.setInventory(this.inventory);
 
     // Steve model with body proportions from default role
     const defaultRole = getRole('steve');
@@ -418,6 +432,14 @@ class Game {
     // Pause reset button
     document.getElementById('pause-reset-btn').addEventListener('click', () => {
       this.resetToSpawn();
+    });
+
+    // Touch-only buttons in pause menu (skill use, skill cycle, camera toggle, help)
+    document.querySelectorAll('#pause-actions .touch-only').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.action;
+        if (action) this.input._actions.push(action);
+      });
     });
 
     // Chest close button
@@ -1228,7 +1250,10 @@ class Game {
     // Update touch controller
     if (this.touchController) {
       this.touchController.update();
+      this.touchController.updateFlightButtons(this.player.isFlying);
     }
+
+    // Update camera FP swing animation (merged into main update below)
 
     // Handle typing submit (before escape so typing mode can submit)
     if (this.input.consumeAction('_typingSubmit')) {
@@ -1753,16 +1778,6 @@ class Game {
     }
 
     // Handle attack (left-click entity detection, prioritized over block breaking)
-    // Auto-repeat break/attack when left mouse is held (desktop continuous mining)
-    if (this.input.mouseButtons[0] && !this._bowCharging && this.uiState === "gameplay") {
-      this._autoMineTimer += dt;
-      if (this._autoMineTimer >= 0.1) {
-        this._autoMineTimer = 0;
-        this.input._actions.push("break");
-      }
-    } else {
-      this._autoMineTimer = 0;
-    }
     // --- Skip attack/break when charging bow ---
     if (!this._bowCharging) {
     this._attackCooldownTimer -= dt;
@@ -1776,12 +1791,35 @@ class Game {
       }
     }
 
-    // 破坏检测 - 独立进行，不再依赖 attacked
-    if (this.input.consumeAction('break') && hitResult.hit) {
+    // 破坏进度系统 — 检测按住状态而非 action 间隔
+    const breakHeld = this.input.mouseButtons[0] || this._breakHeldByTouch;
+    if (breakHeld && hitResult.hit && this.uiState === 'gameplay') {
       const [bx, by, bz] = hitResult.position;
       const blockType = this.world.getBlock(bx, by, bz);
       if (blockType !== BLOCK.WATER && blockType !== BLOCK.AIR && by > 0) {
-        this._instantBreak(bx, by, bz, blockType);
+        const hardness = BLOCK_HARDNESS[blockType] || 1.0;
+        if (!this._breaking || this._breaking.x !== bx || this._breaking.y !== by || this._breaking.z !== bz) {
+          // New target — start breaking
+          this._breaking = { x: bx, y: by, z: bz, progress: 0, total: hardness };
+        }
+        this._breaking.progress += dt / this._breaking.total;
+        if (this._breaking.progress >= 1.0) {
+          this._instantBreak(bx, by, bz, blockType);
+          this._breaking = null;
+          this.renderer.showBreaking(null, 0);
+        } else {
+          this.renderer.showBreaking([bx, by, bz], this._breaking.progress);
+        }
+      } else {
+        // Targeting air/water — reset
+        this._breaking = null;
+        this.renderer.showBreaking(null, 0);
+      }
+    } else {
+      // Not holding break — reset
+      if (this._breaking) {
+        this._breaking = null;
+        this.renderer.showBreaking(null, 0);
       }
     }
 
@@ -2503,6 +2541,9 @@ class Game {
   // Perform an attack on a mob
   _performAttack(mob) {
     const weapon = this.currentWeaponId ? getWeapon(this.currentWeaponId) : null;
+
+    // Trigger FP weapon swing animation
+    this.cameraCtrl.triggerFpSwing();
 
     // Unarmed attack: 1 damage, 0.8s cooldown
     if (!weapon) {

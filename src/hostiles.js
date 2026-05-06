@@ -395,7 +395,7 @@ class Zombie extends HostileMob {
   constructor(world, position) {
     super(world, position, {
       maxHealth: 20, atk: 5, speed: 1.0,
-      attackRange: 1.5, attackCooldown: 1.0,
+      attackRange: 2.0, attackCooldown: 1.5,
       trackingRange: 16, width: 0.6, height: 1.8,
     });
   }
@@ -472,8 +472,8 @@ class Skeleton extends HostileMob {
   constructor(world, position) {
     super(world, position, {
       maxHealth: 20, atk: 6, speed: 1.0,
-      attackRange: 8, attackCooldown: 2.0,
-      trackingRange: 15, width: 0.6, height: 1.8,
+      attackRange: 5, attackCooldown: 2.5,
+      trackingRange: 12, width: 0.6, height: 1.8,
     });
   }
 
@@ -581,8 +581,8 @@ class Spider extends HostileMob {
   constructor(world, position) {
     super(world, position, {
       maxHealth: 16, atk: 3, speed: 1.8,
-      attackRange: 1.5, attackCooldown: 1.0,
-      trackingRange: 20, width: 0.7, height: 0.8,
+      attackRange: 1.8, attackCooldown: 1.2,
+      trackingRange: 16, width: 0.7, height: 0.8,
     });
     this._jumpTimer = 0;
   }
@@ -831,7 +831,7 @@ class Wolf extends HostileMob {
   constructor(world, position) {
     super(world, position, {
       maxHealth: 8, atk: 3, speed: 1.5,
-      attackRange: 1.2, attackCooldown: 0.8,
+      attackRange: 1.5, attackCooldown: 1.0,
       trackingRange: 10, width: 0.4, height: 0.5,
     });
     this._packTimer = 0;

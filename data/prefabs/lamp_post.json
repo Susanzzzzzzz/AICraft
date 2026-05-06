@@ -1,0 +1,23 @@
+{
+  "name": "路灯",
+  "description": "木制路灯",
+  "size": [
+    1,
+    4,
+    1
+  ],
+  "tags": [
+    "decoration",
+    "building"
+  ],
+  "palette": {
+    "w": 4,
+    "t": 24
+  },
+  "data": [
+    "w",
+    "w",
+    "w",
+    "t"
+  ]
+}

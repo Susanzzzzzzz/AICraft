@@ -1668,3 +1668,49 @@ body {
   #level-complete-msg { font-size: 12px; }
   #level-complete-actions button { padding: 6px 16px; font-size: 12px; }
 }
+
+/* ===== Touch-only elements (hidden on devices with hover/pointer) ===== */
+@media (hover: hover) and (pointer: fine) {
+  .touch-only {
+    display: none !important;
+  }
+}
+
+/* ===== Dynamic hotbar slot styles ===== */
+.hotbar-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.slot-emoji {
+  font-size: 20px;
+  line-height: 1;
+  text-align: center;
+}
+
+.slot-count {
+  position: absolute;
+  bottom: 2px;
+  right: 3px;
+  font-size: 9px;
+  color: #aaa;
+}
+
+/* ===== Touch inventory guide ===== */
+.touch-guide {
+  text-align: center;
+  color: #aaa;
+  font-size: 12px;
+  padding: 6px 0;
+  margin-top: 6px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ===== Touch-selected inventory slot ===== */
+.inv-slot.touch-selected {
+  border-color: #4CAF50 !important;
+  box-shadow: 0 0 6px rgba(76,175,80,0.5);
+}

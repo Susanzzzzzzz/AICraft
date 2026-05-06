@@ -1,0 +1,23 @@
+{
+  "name": "小木屋",
+  "description": "一个小型木制房屋",
+  "size": [
+    7,
+    5,
+    7
+  ],
+  "tags": [
+    "building",
+    "plains"
+  ],
+  "palette": {
+    "w": 4
+  },
+  "data": [
+    "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+    "www wwww     ww     ww     ww     ww     wwwwwwww",
+    "www wwww     ww     ww     ww     ww     wwwwwwww",
+    "www wwww     ww     ww     ww     ww     wwwwwwww",
+    "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+  ]
+}

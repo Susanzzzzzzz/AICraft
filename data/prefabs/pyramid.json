@@ -1,0 +1,23 @@
+{
+  "name": "沙漠金字塔",
+  "description": "阶梯状砂岩金字塔",
+  "size": [
+    9,
+    5,
+    9
+  ],
+  "tags": [
+    "building",
+    "desert"
+  ],
+  "palette": {
+    "s": 3
+  },
+  "data": [
+    "sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss",
+    "          sssssss  sssssss  sssssss  sssssss  sssssss  sssssss  sssssss          ",
+    "                    sssss    sssss    sssss    sssss    sssss                    ",
+    "                              sss      sss      sss                              ",
+    "                                        s                                        "
+  ]
+}

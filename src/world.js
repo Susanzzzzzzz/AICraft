@@ -192,6 +192,37 @@ export const ITEM_COLORS = {
   [ITEM.CHEST]: 0x8D6E63, [ITEM.GUNPOWDER]: 0x4A4A4A, [ITEM.ENDER_PEARL]: 0x9C27B0,
 };
 
+// Block hardness: break duration in seconds (default 1.0)
+export const BLOCK_HARDNESS = {
+  [BLOCK.GRASS]: 0.6,
+  [BLOCK.DIRT]: 0.5,
+  [BLOCK.STONE]: 1.5,
+  [BLOCK.WOOD]: 1.0,
+  [BLOCK.BRICK]: 1.5,
+  [BLOCK.WATER]: 0,
+  [BLOCK.LEAVES]: 0.3,
+  [BLOCK.FLOWER]: 0.1,
+  [BLOCK.MUD]: 0.5,
+  [BLOCK.CLAY]: 0.6,
+  [BLOCK.LILY_PAD]: 0.1,
+  [BLOCK.REED]: 0.1,
+  [BLOCK.COAL_ORE]: 1.5,
+  [BLOCK.IRON_ORE]: 2.0,
+  [BLOCK.GOLD_ORE]: 2.5,
+  [BLOCK.DIAMOND_ORE]: 3.0,
+  [BLOCK.REDSTONE_ORE]: 2.0,
+  [BLOCK.LAPIS_ORE]: 2.0,
+  [BLOCK.SAND]: 0.5,
+  [BLOCK.GRAVEL]: 0.5,
+  [BLOCK.SNOW]: 0.3,
+  [BLOCK.CACTUS]: 0.3,
+  [BLOCK.CHEST]: 0.8,
+  [BLOCK.TORCH]: 0.1,
+  [BLOCK.GRANITE]: 1.5,
+  [BLOCK.DIORITE]: 1.5,
+  [BLOCK.ANDESITE]: 1.5,
+};
+
 export function isSolid(block) {
   return block !== BLOCK.AIR && block !== BLOCK.WATER;
 }

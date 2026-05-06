@@ -1,0 +1,21 @@
+{
+  "name": "矿道入口",
+  "description": "向下的矿道入口",
+  "size": [
+    5,
+    3,
+    5
+  ],
+  "tags": [
+    "building",
+    "cave"
+  ],
+  "palette": {
+    "s": 3
+  },
+  "data": [
+    "s s ss   ss   ss   ss s s",
+    "s s ss   ss   ss   ss s s",
+    "sssssssssssssssssssssssss"
+  ]
+}

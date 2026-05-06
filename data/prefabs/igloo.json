@@ -1,0 +1,22 @@
+{
+  "name": "冰屋",
+  "description": "雪块搭建的圆顶冰屋",
+  "size": [
+    5,
+    4,
+    5
+  ],
+  "tags": [
+    "building",
+    "tundra"
+  ],
+  "palette": {
+    "s": 21
+  },
+  "data": [
+    " sss s   ss s ss   s sss ",
+    " sss ss sss   sss ss sss ",
+    "ssssss   ss   ss   ssssss",
+    "  s   sss ss ss sss   s  "
+  ]
+}

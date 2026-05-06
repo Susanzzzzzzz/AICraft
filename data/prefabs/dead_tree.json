@@ -1,0 +1,23 @@
+{
+  "name": "枯树",
+  "description": "沼泽中的枯树",
+  "size": [
+    3,
+    5,
+    3
+  ],
+  "tags": [
+    "decoration",
+    "swamp"
+  ],
+  "palette": {
+    "w": 4
+  },
+  "data": [
+    "    w    ",
+    "    w    ",
+    "    w    ",
+    "    w    ",
+    " w www w "
+  ]
+}

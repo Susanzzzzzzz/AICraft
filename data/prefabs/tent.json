@@ -1,0 +1,22 @@
+{
+  "name": "帐篷",
+  "description": "野外露营帐篷",
+  "size": [
+    5,
+    3,
+    5
+  ],
+  "tags": [
+    "decoration",
+    "building"
+  ],
+  "palette": {
+    "w": 4,
+    "l": 7
+  },
+  "data": [
+    "      www  w w  www      ",
+    "      l l ll ll l l      ",
+    "           lll           "
+  ]
+}

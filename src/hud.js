@@ -2,6 +2,38 @@
 import { BLOCK, BLOCK_NAMES, ITEM, ITEM_NAMES } from './world.js';
 import { getSkill } from './skillLibrary.js';
 
+// EMOJI_MAP for hotbar display
+const HOTBAR_EMOJI_MAP = {
+  [BLOCK.GRASS]: '🧱', [BLOCK.DIRT]: '🧱', [BLOCK.STONE]: '🧱', [BLOCK.WOOD]: '🪵',
+  [BLOCK.BRICK]: '🧱', [BLOCK.WATER]: '🌊', [BLOCK.LEAVES]: '🌿', [BLOCK.FLOWER]: '🌹',
+  [BLOCK.MUD]: '🧱', [BLOCK.CLAY]: '🧱', [BLOCK.LILY_PAD]: '🪷', [BLOCK.REED]: '🌾',
+  [BLOCK.COAL_ORE]: '🪨', [BLOCK.IRON_ORE]: '💎', [BLOCK.GOLD_ORE]: '💎',
+  [BLOCK.DIAMOND_ORE]: '💎', [BLOCK.REDSTONE_ORE]: '💎', [BLOCK.LAPIS_ORE]: '💎',
+  [BLOCK.SAND]: '🪨', [BLOCK.GRAVEL]: '🪨', [BLOCK.SNOW]: '❄️', [BLOCK.CACTUS]: '🌵',
+  [BLOCK.CHEST]: '🧰', [BLOCK.TORCH]: '🔥',
+  [BLOCK.GRANITE]: '🧱', [BLOCK.DIORITE]: '🧱', [BLOCK.ANDESITE]: '🧱',
+  [ITEM.PLANK]: '🪵', [ITEM.STICK]: '🥢',
+  [ITEM.SWORD_WOOD]: '🗡️', [ITEM.SWORD_STONE]: '🗡️', [ITEM.SWORD_IRON]: '🗡️',
+  [ITEM.SWORD_DIAMOND]: '🗡️', [ITEM.SWORD_NETHERITE]: '🗡️',
+  [ITEM.SWORD_FROSTMOURNE]: '🗡️', [ITEM.SWORD_DRAGON]: '🗡️',
+  [ITEM.DIAMOND]: '💎', [ITEM.DIAMOND_CHESTPLATE]: '🛡️', [ITEM.IRON_INGOT]: '⛏️',
+  [ITEM.NETHERITE_SCRAP]: '💎', [ITEM.SLIME_BALL]: '🟢',
+  [ITEM.PICKAXE_WOOD]: '⛏️', [ITEM.PICKAXE_STONE]: '⛏️', [ITEM.PICKAXE_IRON]: '⛏️', [ITEM.PICKAXE_DIAMOND]: '⛏️',
+  [ITEM.AXE_WOOD]: '⛏️', [ITEM.AXE_STONE]: '⛏️', [ITEM.AXE_IRON]: '⛏️', [ITEM.AXE_DIAMOND]: '⛏️',
+  [ITEM.SHOVEL_WOOD]: '⛏️', [ITEM.SHOVEL_STONE]: '⛏️', [ITEM.SHOVEL_IRON]: '⛏️', [ITEM.SHOVEL_DIAMOND]: '⛏️',
+  [ITEM.BOW]: '🏹', [ITEM.ARROW]: '➵',
+  [ITEM.COAL]: '🪨', [ITEM.IRON_ORE_ITEM]: '💎', [ITEM.GOLD_ORE_ITEM]: '💎',
+  [ITEM.DIAMOND_ORE_ITEM]: '💎', [ITEM.REDSTONE_ORE_ITEM]: '💎', [ITEM.LAPIS_ORE_ITEM]: '💎',
+  [ITEM.SAND_ITEM]: '🪨', [ITEM.GRAVEL_ITEM]: '🪨', [ITEM.SNOW_ITEM]: '❄️', [ITEM.CACTUS_ITEM]: '🌵',
+  [ITEM.GRANITE_ITEM]: '🧱', [ITEM.DIORITE_ITEM]: '🧱', [ITEM.ANDESITE_ITEM]: '🧱',
+  [ITEM.CHEST]: '🧰', [ITEM.GUNPOWDER]: '💥', [ITEM.ENDER_PEARL]: '🔮',
+  [ITEM.COBBLESTONE]: '🧱',
+  [ITEM.LEATHER_HELMET]: '🪖', [ITEM.IRON_HELMET]: '🪖', [ITEM.DIAMOND_HELMET]: '🪖', [ITEM.NETHERITE_HELMET]: '🪖',
+  [ITEM.LEATHER_CHESTPLATE]: '🛡️', [ITEM.IRON_CHESTPLATE]: '🛡️', [ITEM.DIAMOND_CHESTPLATE_NEW]: '🛡️', [ITEM.NETHERITE_CHESTPLATE]: '🛡️',
+  [ITEM.LEATHER_LEGGINGS]: '👖', [ITEM.IRON_LEGGINGS]: '👖', [ITEM.DIAMOND_LEGGINGS]: '👖', [ITEM.NETHERITE_LEGGINGS]: '👖',
+  [ITEM.LEATHER_BOOTS]: '👢', [ITEM.IRON_BOOTS]: '👢', [ITEM.DIAMOND_BOOTS]: '👢', [ITEM.NETHERITE_BOOTS]: '👢',
+};
+
 const BLOCK_CSS_CLASSES = {
   [BLOCK.GRASS]: 'grass',
   [BLOCK.DIRT]:  'dirt',
@@ -41,6 +73,7 @@ export class HUD {
     this.levelNameDisplay = null;
     this.levelTasksDisplay = null;
     this._touchMode = false;
+    this._inventoryRef = null; // reference to inventory for hotbar rendering
   }
 
   init() {
@@ -139,13 +172,25 @@ export class HUD {
       bowFill.style.width = (bowChargePercent * 100) + '%';
     }
 
-    // Update hotbar selection
-    this.hotbarSlots.forEach(slot => {
-      const type = parseInt(slot.dataset.type);
-      if (type === selectedBlock) {
-        slot.classList.add('selected');
-      } else {
-        slot.classList.remove('selected');
+    // Update hotbar selection and dynamic content
+    this.hotbarSlots.forEach((slot, idx) => {
+      // Selection by inventory.selectedSlot index
+      slot.classList.toggle('selected', idx === (this._inventoryRef ? this._inventoryRef.selectedSlot : 0));
+
+      // Dynamic emoji + count from inventory
+      const emojiSpan = slot.querySelector('.slot-emoji');
+      const countSpan = slot.querySelector('.slot-count');
+      if (this._inventoryRef && emojiSpan) {
+        const item = this._inventoryRef.hotbar[idx];
+        if (item) {
+          emojiSpan.textContent = HOTBAR_EMOJI_MAP[item.type] || '🧱';
+          if (countSpan) {
+            countSpan.textContent = item.count > 1 ? '×' + item.count : '';
+          }
+        } else {
+          emojiSpan.textContent = '';
+          if (countSpan) countSpan.textContent = '';
+        }
       }
     });
 
@@ -275,9 +320,9 @@ export class HUD {
     this._hotbarTouchHandler = (e) => {
       e.preventDefault();
       const slot = e.currentTarget;
-      const type = parseInt(slot.dataset.type);
+      const index = parseInt(slot.dataset.index);
       // Dispatch a custom event that main.js can listen for
-      const event = new CustomEvent('hotbar-touch-select', { detail: { type } });
+      const event = new CustomEvent('hotbar-touch-select', { detail: { index } });
       document.dispatchEvent(event);
     };
     document.querySelectorAll('.hotbar-slot').forEach(el => {
@@ -292,6 +337,13 @@ export class HUD {
       });
       this._hotbarTouchHandler = null;
     }
+  }
+
+  /**
+   * Set inventory reference for dynamic hotbar rendering
+   */
+  setInventory(inventory) {
+    this._inventoryRef = inventory;
   }
 }
 

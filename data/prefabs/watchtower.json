@@ -1,0 +1,28 @@
+{
+  "name": "瞭望塔",
+  "description": "石木混合瞭望塔",
+  "size": [
+    5,
+    8,
+    5
+  ],
+  "tags": [
+    "building",
+    "plains",
+    "tundra"
+  ],
+  "palette": {
+    "s": 3,
+    "w": 4
+  },
+  "data": [
+    "sssssssssssssssssssssssss",
+    "sssssssssssssssssssssssss",
+    "swwwsw   ww   ww   wswwws",
+    "swwwsw   ww   ww   wswwws",
+    "swwwsw   ww   ww   wswwws",
+    "swwwsw   ww   ww   wswwws",
+    "swwwsw   ww   ww   wswwws",
+    "wwwwwwwwwwwwwwwwwwwwwwwww"
+  ]
+}

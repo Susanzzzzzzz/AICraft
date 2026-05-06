@@ -1,0 +1,22 @@
+{
+  "name": "大蘑菇",
+  "description": "沼泽中的红色大蘑菇",
+  "size": [
+    3,
+    3,
+    3
+  ],
+  "tags": [
+    "decoration",
+    "swamp"
+  ],
+  "palette": {
+    "w": 4,
+    "r": 5
+  },
+  "data": [
+    "    w    ",
+    "    w    ",
+    " r rrr r "
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "水井",
+  "description": "石头砌成的小水井",
+  "size": [
+    5,
+    3,
+    5
+  ],
+  "tags": [
+    "building",
+    "plains"
+  ],
+  "palette": {
+    "s": 3,
+    "a": 6
+  },
+  "data": [
+    "ssssss   ss a ss   ssssss",
+    "ssssss   ss a ss   ssssss",
+    "ssssss   ss   ss   ssssss"
+  ]
+}

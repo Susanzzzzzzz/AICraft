@@ -1,0 +1,20 @@
+{
+  "name": "灌木丛",
+  "description": "茂密的灌木丛",
+  "size": [
+    3,
+    2,
+    3
+  ],
+  "tags": [
+    "decoration",
+    "vegetation"
+  ],
+  "palette": {
+    "l": 7
+  },
+  "data": [
+    " l lll l ",
+    "    l    "
+  ]
+}

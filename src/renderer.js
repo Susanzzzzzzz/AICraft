@@ -43,6 +43,87 @@ export class Renderer {
     // Destruction particles
     this._particles = [];
     this._lastParticleTime = 0;
+
+    // Break progress visuals
+    this._breakOverlay = null;
+    this._breakProgressBar = null;
+    this._breakProgressFill = null;
+    this._initBreakVisuals();
+  }
+
+  _initBreakVisuals() {
+    // Darkening overlay (BoxGeometry 1.002)
+    const overlayGeo = new THREE.BoxGeometry(1.002, 1.002, 1.002);
+    const overlayMat = new THREE.MeshBasicMaterial({
+      color: 0x000000,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      renderOrder: 1,
+    });
+    this._breakOverlay = new THREE.Mesh(overlayGeo, overlayMat);
+    this._breakOverlay.visible = false;
+    this.scene.add(this._breakOverlay);
+
+    // Progress bar background (0.8 × 0.06)
+    const barBgGeo = new THREE.PlaneGeometry(0.8, 0.06);
+    const barBgMat = new THREE.MeshBasicMaterial({
+      color: 0x888888,
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      renderOrder: 2,
+    });
+    this._breakProgressBar = new THREE.Mesh(barBgGeo, barBgMat);
+    this._breakProgressBar.visible = false;
+    this.scene.add(this._breakProgressBar);
+
+    // Progress bar fill (0.76 × 0.04, pivot at left edge)
+    const fillGeo = new THREE.PlaneGeometry(0.76, 0.04);
+    fillGeo.translate(0.38, 0, 0); // pivot at left edge
+    const fillMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      renderOrder: 3,
+    });
+    this._breakProgressFill = new THREE.Mesh(fillGeo, fillMat);
+    this._breakProgressFill.visible = false;
+    this.scene.add(this._breakProgressFill);
+  }
+
+  showBreaking(position, progress) {
+    if (!position) {
+      this._breakOverlay.visible = false;
+      this._breakProgressBar.visible = false;
+      this._breakProgressFill.visible = false;
+      return;
+    }
+    const x = position[0] + 0.5;
+    const y = position[1] + 0.5;
+    const z = position[2] + 0.5;
+
+    this._breakOverlay.position.set(x, y, z);
+    this._breakOverlay.material.opacity = progress * 0.55;
+    this._breakOverlay.visible = true;
+
+    const barY = position[1] + 1.15;
+    this._breakProgressBar.position.set(x, barY, z);
+    this._breakProgressBar.visible = true;
+
+    this._breakProgressFill.position.set(x - 0.38, barY, z);
+    this._breakProgressFill.scale.x = Math.max(0.001, progress);
+    // Color gradient: white→yellow→orange→red→dark red
+    const p = progress;
+    let color;
+    if (p < 0.25) color = new THREE.Color(0xffffff).lerp(new THREE.Color(0xFFEB3B), p / 0.25);
+    else if (p < 0.5) color = new THREE.Color(0xFFEB3B).lerp(new THREE.Color(0xFF9800), (p - 0.25) / 0.25);
+    else if (p < 0.75) color = new THREE.Color(0xFF9800).lerp(new THREE.Color(0xF44336), (p - 0.5) / 0.25);
+    else color = new THREE.Color(0xF44336).lerp(new THREE.Color(0xB71C1C), (p - 0.75) / 0.25);
+    this._breakProgressFill.material.color.copy(color);
+    this._breakProgressFill.visible = true;
   }
 
   init(canvas) {
@@ -594,6 +675,12 @@ export class Renderer {
       const dt = this._lastParticleTime ? Math.min((now - this._lastParticleTime) / 1000, 0.05) : 0.016;
       this._lastParticleTime = now;
       this._updateParticles(dt);
+    }
+
+    // Billboard: make progress bar face camera
+    if (this._breakProgressBar && this._breakProgressBar.visible) {
+      this._breakProgressBar.lookAt(this.camera.position);
+      this._breakProgressFill.lookAt(this.camera.position);
     }
 
     if (this.useChunks) {

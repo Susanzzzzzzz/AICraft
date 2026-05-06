@@ -1,0 +1,22 @@
+{
+  "name": "仙人掌丛",
+  "description": "沙漠中的仙人掌群",
+  "size": [
+    5,
+    3,
+    5
+  ],
+  "tags": [
+    "decoration",
+    "desert"
+  ],
+  "palette": {
+    "c": 22,
+    "f": 8
+  },
+  "data": [
+    "      c c   c   c c      ",
+    "      c c   c   c c      ",
+    "      f c   f   c f      "
+  ]
+}

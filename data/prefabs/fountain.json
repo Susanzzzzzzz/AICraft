@@ -1,0 +1,23 @@
+{
+  "name": "喷泉",
+  "description": "石砌小喷泉",
+  "size": [
+    5,
+    3,
+    5
+  ],
+  "tags": [
+    "decoration",
+    "building"
+  ],
+  "palette": {
+    "s": 3,
+    "a": 6,
+    "w": 4
+  },
+  "data": [
+    "ssssssaaassaaassaaassssss",
+    "ssssss   ss w ss   ssssss",
+    "            w            "
+  ]
+}

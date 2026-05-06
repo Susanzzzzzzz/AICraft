@@ -1,0 +1,23 @@
+{
+  "name": "沼泽小屋",
+  "description": "沼泽中的高脚木屋",
+  "size": [
+    5,
+    4,
+    5
+  ],
+  "tags": [
+    "building",
+    "swamp"
+  ],
+  "palette": {
+    "w": 4,
+    "s": 3
+  },
+  "data": [
+    "w   w               w   w",
+    "w   w               w   w",
+    "wwwwwwwwwwwwwwwwwwwwwwwww",
+    "wwwwww   ww   ww   wwwwww"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "岩石堆",
+  "description": "小型岩石堆",
+  "size": [
+    3,
+    2,
+    3
+  ],
+  "tags": [
+    "decoration",
+    "rock"
+  ],
+  "palette": {
+    "s": 3
+  },
+  "data": [
+    "s s s s s",
+    "    s    "
+  ]
+}
