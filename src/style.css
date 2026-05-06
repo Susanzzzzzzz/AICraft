@@ -79,13 +79,13 @@ body {
 }
 
 #start-screen h1 {
-  font-size: 48px;
+  font-size: clamp(22px, 5vmin, 48px);
   text-shadow: 3px 3px 0 #333;
   margin-bottom: -4px;
 }
 
 #start-screen .subtitle {
-  font-size: 16px;
+  font-size: clamp(11px, 2vmin, 16px);
   color: #aaa;
   margin-bottom: 4px;
 }
@@ -148,8 +148,8 @@ body {
 
 /* ===== 按钮 ===== */
 #start-btn {
-  padding: 14px 48px;
-  font-size: 20px;
+  padding: clamp(6px, 1.5vmin, 14px) clamp(24px, 5vmin, 48px);
+  font-size: clamp(14px, 2.5vmin, 20px);
   font-family: 'Courier New', monospace;
   background: #4CAF50;
   color: #fff;
@@ -170,8 +170,8 @@ body {
   right: 15px;
   z-index: 80;
   background: rgba(0,0,0,0.55);
-  padding: 12px;
-  width: 260px;
+  padding: clamp(8px, 1.5vmin, 12px);
+  width: clamp(180px, 30vmin, 260px);
   color: #fff;
   font-family: 'Courier New', monospace;
   pointer-events: none;
@@ -192,13 +192,13 @@ body {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  font-size: 11px;
-  line-height: 22px;
+  font-size: clamp(9px, 1.2vmin, 11px);
+  line-height: clamp(18px, 2.5vmin, 22px);
 }
 .help-key {
   color: #fff;
   text-align: right;
-  min-width: 70px;
+  min-width: clamp(50px, 7vmin, 70px);
 }
 .help-desc {
   color: #ccc;
@@ -275,8 +275,8 @@ body {
 }
 
 .hotbar-slot {
-  width: 56px;
-  height: 64px;
+  width: clamp(32px, 5vmin, 56px);
+  height: clamp(40px, 6vmin, 68px);
   background: rgba(0,0,0,0.6);
   border: 2px solid #555;
   display: flex;
@@ -295,7 +295,7 @@ body {
 .slot-key {
   position: absolute;
   top: 2px; left: 4px;
-  font-size: 10px;
+  font-size: clamp(8px, 1vmin, 12px);
   color: #aaa;
 }
 
@@ -345,11 +345,12 @@ body {
   position: fixed;
   top: 10px; left: 10px;
   color: #fff;
-  font-size: 12px;
+  font-size: clamp(10px, 1vmin, 13px);
   z-index: 50;
   pointer-events: none;
   text-shadow: 0 0 3px #000;
   line-height: 1.6;
+  padding: clamp(4px, 0.5vmin, 8px) clamp(8px, 1vmin, 12px);
 }
 
 /* ===== 顶部信息栏 ===== */
@@ -362,14 +363,16 @@ body {
   gap: 20px;
   z-index: 50;
   pointer-events: none;
+  font-size: clamp(10px, 1.2vmin, 14px);
+  padding: clamp(4px, 0.5vmin, 8px) clamp(8px, 1vmin, 16px);
 }
 
 .top-info-item {
   color: #fff;
-  font-size: 14px;
+  font-size: clamp(10px, 1.2vmin, 14px);
   text-shadow: 0 0 3px #000;
   background: rgba(0,0,0,0.4);
-  padding: 4px 10px;
+  padding: clamp(4px, 0.5vmin, 8px) clamp(8px, 1vmin, 16px);
   border-radius: 4px;
 }
 
@@ -880,14 +883,14 @@ body {
 }
 
 .skill-slot {
-  width: 40px;
-  height: 40px;
+  width: clamp(28px, 3.5vmin, 40px);
+  height: clamp(28px, 3.5vmin, 40px);
   background: rgba(0,0,0,0.6);
   border: 2px solid #555;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: clamp(10px, 1.2vmin, 14px);
   color: #ccc;
   border-radius: 4px;
   transition: all 0.15s;
@@ -948,11 +951,11 @@ body {
   transform: translateX(-50%);
   z-index: 50;
   pointer-events: none;
-  font-size: 13px;
+  font-size: clamp(10px, 1vmin, 13px);
   color: #fff;
   text-shadow: 0 0 3px #000;
   background: rgba(0,0,0,0.5);
-  padding: 6px 12px;
+  padding: clamp(4px, 0.5vmin, 8px) clamp(8px, 1vmin, 12px);
   border-radius: 6px;
   display: flex;
   flex-direction: column;
@@ -1410,17 +1413,10 @@ body {
 
 /* ===== Responsive: Tablet < 768px ===== */
 @media (max-width: 768px) {
-  #hotbar { bottom: 12px; left: calc(50% - 28px); }
-  .hotbar-slot { width: 44px; height: 52px; }
-  #skill-bar { bottom: 74px; }
-  .skill-slot { width: 32px; height: 32px; font-size: 10px; }
-  #help-panel { width: 220px; padding: 10px; }
-  .help-row { font-size: 10px; line-height: 20px; }
   #start-screen, #pause-screen { max-width: 500px; }
   .pause-content { grid-template-columns: 1fr; }
   .start-content { flex-direction: column; align-items: center; max-width: 400px; }
   .start-left { display: none; }
-  #start-screen h1 { font-size: 36px; }
 
   /* Overflow scroll for tablet landscape (e.g. Android phones 640-768px) */
   #overlay, #inventory-overlay, #chest-overlay {
@@ -1440,26 +1436,14 @@ body {
 
 /* ===== Responsive: Phone < 480px ===== */
 @media (max-width: 480px) {
-  #hotbar { bottom: 80px; gap: 2px; left: calc(50% - 28px); }
-  .hotbar-slot { width: 36px; height: 44px; }
-  .slot-key { font-size: 8px; }
   .slot-name { font-size: 7px; }
   .block-preview { width: 20px; height: 20px; }
-  #skill-bar { bottom: 60px; }
-  .skill-slot { width: 28px; height: 28px; font-size: 9px; }
-  #help-panel { width: 180px; padding: 8px 10px; }
-  .help-row { font-size: 9px; gap: 6px; line-height: 18px; }
-  .help-key { min-width: 50px; }
   #start-screen, #pause-screen { max-width: 100%; padding: 16px; }
   .start-content { flex-direction: column; align-items: center; max-width: 100%; }
   .start-left { display: none; }
-  #start-screen h1 { font-size: 28px; }
-  #start-btn { padding: 10px 32px; font-size: 16px; }
   .start-controls { font-size: 11px; }
-  #debug-info { font-size: 10px; }
   #top-info { gap: 8px; }
-  .top-info-item { font-size: 11px; padding: 2px 6px; }
-  #level-info { font-size: 11px; padding: 4px 8px; top: 36px; }
+  #level-info { top: 36px; }
   #crosshair { font-size: 22px; }
   #typing-display { font-size: 13px; bottom: 8px; left: 8px; padding: 6px 10px; }
 
@@ -1679,16 +1663,15 @@ body {
     max-height: none;
   }
   .start-left { display: none; }
-  #start-screen .subtitle { font-size: 11px; margin-bottom: 2px; }
+  #start-screen .subtitle { margin-bottom: 2px; }
 
   /* --- Start screen --- */
   #start-screen, #pause-screen { max-width: 100%; padding: 8px 12px; }
-  #start-screen h1 { font-size: 22px; margin-bottom: 2px; }
+  #start-screen h1 { margin-bottom: 2px; }
   .start-content { gap: 8px; flex-direction: column; align-items: center; max-width: 100%; }
   .start-controls { padding: 4px 8px; }
   .start-control-row { font-size: 10px; line-height: 16px; gap: 6px; }
   .start-control-row .start-key { min-width: 50px; }
-  #start-btn { padding: 6px 24px; font-size: 14px; }
   #character-preview-container { display: none; }
 
   /* --- Pause screen --- */
@@ -1761,8 +1744,14 @@ body {
   position: absolute;
   bottom: 2px;
   right: 3px;
-  font-size: 9px;
+  font-size: clamp(8px, 0.9vmin, 11px);
   color: #aaa;
+}
+
+/* 触屏模式 hotbar 放大 */
+.touch-mode .hotbar-slot {
+  width: clamp(40px, 6.5vmin, 64px) !important;
+  height: clamp(48px, 8vmin, 80px) !important;
 }
 
 /* ===== Touch inventory guide ===== */
@@ -1779,4 +1768,69 @@ body {
 .inv-slot.touch-selected {
   border-color: #4CAF50 !important;
   box-shadow: 0 0 6px rgba(76,175,80,0.5);
+}
+
+/* ===== 任务面板 ===== */
+#task-panel {
+  position: fixed;
+  bottom: clamp(70px, 10vmin, 100px);
+  left: 8px;
+  z-index: 52;
+  pointer-events: auto;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+#task-panel.task-panel-collapsed {
+  background: rgba(0,0,0,0.6);
+  border-radius: 6px;
+  padding: 4px 10px;
+  width: auto;
+  min-width: clamp(60px, 8vmin, 120px);
+}
+
+#task-panel.task-panel-expanded {
+  background: rgba(0,0,0,0.75);
+  border-radius: 6px;
+  padding: 6px 10px;
+  min-width: clamp(140px, 18vmin, 260px);
+}
+
+#task-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  font-size: clamp(10px, 1.2vmin, 13px);
+  white-space: nowrap;
+}
+
+#task-panel-toggle {
+  font-size: clamp(8px, 1vmin, 12px);
+  color: #aaa;
+  transition: transform 0.2s;
+}
+
+.task-panel-expanded #task-panel-toggle {
+  transform: rotate(90deg);
+}
+
+#task-panel-body {
+  margin-top: 4px;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  padding-top: 4px;
+}
+
+#task-panel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* 触屏模式：避开摇杆 */
+.touch-mode #task-panel {
+  bottom: clamp(120px, 18vmin, 160px);
+  left: clamp(8px, 2vmin, 16px);
 }

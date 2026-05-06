@@ -170,6 +170,9 @@ class Game {
     this._suggestionEl = null;
     this._bowChargeContainerEl = null;
     this._bowChargeFillEl = null;
+
+    // Cursor 手持物品系统 (背包操作中转)
+    this._cursor = { item: null, origin: null };
   }
 
   init() {
@@ -513,6 +516,7 @@ class Game {
   }
 
   _setupInventoryUI() {
+    this._cursorGhost = null;
     const overlay = document.getElementById('inventory-overlay');
     const storageGrid = document.getElementById('storage-grid');
     const hotbarRow = document.getElementById('inventory-hotbar');
@@ -538,7 +542,18 @@ class Game {
       slot.className = 'inv-slot';
       slot.dataset.index = i;
       slot.dataset.type = 'storage';
-      slot.addEventListener('click', () => this._onInvSlotClick('storage', i));
+      slot.addEventListener('click', (e) => {
+        if (this._dragCompleted) { this._dragCompleted = false; return; }
+        if (e.shiftKey) {
+          this._cursorShiftMove('storage', i);
+        } else {
+          this._cursorHandleSlotClick('storage', i);
+        }
+      });
+      slot.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        this._cursorHandleRightClick('storage', i);
+      });
       slot.addEventListener('mouseenter', () => this._showTooltip('storage', i));
       slot.addEventListener('mouseleave', () => this._hideTooltip());
       storageGrid.appendChild(slot);
@@ -567,7 +582,18 @@ class Game {
       slot.dataset.index = i;
       slot.dataset.type = 'hotbar';
       if (i === this.inventory.selectedSlot) slot.classList.add('selected');
-      slot.addEventListener('click', () => this._onInvSlotClick('hotbar', i));
+      slot.addEventListener('click', (e) => {
+        if (this._dragCompleted) { this._dragCompleted = false; return; }
+        if (e.shiftKey) {
+          this._cursorShiftMove('hotbar', i);
+        } else {
+          this._cursorHandleSlotClick('hotbar', i);
+        }
+      });
+      slot.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        this._cursorHandleRightClick('hotbar', i);
+      });
       slot.addEventListener('mouseenter', () => this._showTooltip('hotbar', i));
       slot.addEventListener('mouseleave', () => this._hideTooltip());
       hotbarRow.appendChild(slot);
@@ -579,49 +605,124 @@ class Game {
     // Crafting slots
     this._craftGrid = [null, null, null, null];
     craftSlots.forEach((el, i) => {
-      el.addEventListener('click', () => {
-        const existing = this._craftGrid[i];
-        if (existing) {
-          // Try to add 1 more of the same type from inventory
-          if (this.inventory.hasItem(existing.type, 1)) {
-            existing.count += 1;
-            this.inventory.removeItem(existing.type, 1);
+      el.addEventListener('click', (e) => {
+        if (e.shiftKey) {
+          // Shift+点击 = 快速移动回背包
+          this._cursorShiftMoveFromCraft(i);
+          return;
+        }
+        if (this._cursor.item) {
+          // Cursor有物品 → 放1个到合成格
+          const existing = this._craftGrid[i];
+          if (existing) {
+            if (existing.type === this._cursor.item.type && existing.count < 64) {
+              existing.count += 1;
+              this._cursor.item.count -= 1;
+              if (this._cursor.item.count <= 0) {
+                this._cursor.item = null;
+                this._destroyCursorGhost();
+              }
+            }
           } else {
-            // No more of this type — return whole stack to inventory
-            this.inventory.addItem(existing.type, existing.count);
-            this._craftGrid[i] = null;
+            this._craftGrid[i] = { type: this._cursor.item.type, count: 1 };
+            this._cursor.item.count -= 1;
+            if (this._cursor.item.count <= 0) {
+              this._cursor.item = null;
+              this._destroyCursorGhost();
+            } else {
+              this._destroyCursorGhost();
+              this._createCursorGhost(this._cursor.item);
+            }
           }
         } else {
-          // Take from selected hotbar slot
-          const selected = this.inventory.getSelectedItem();
-          if (selected) {
-            this._craftGrid[i] = { type: selected.type, count: 1 };
-            this.inventory.removeItem(selected.type, 1);
+          // Cursor空 → 从合成格拾取整组
+          const existing = this._craftGrid[i];
+          if (existing) {
+            this._cursor.item = existing;
+            this._cursor.origin = { type: 'craft', index: i };
+            this._craftGrid[i] = null;
+            this._createCursorGhost(this._cursor.item);
           }
         }
         this._updateCraftResult();
-        this._updateInventoryUI();
         this._updateCraftSlots();
+        this._updateInventoryUI();
+      });
+
+      // 右键放1个
+      el.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        if (this._cursor.item) {
+          const existing = this._craftGrid[i];
+          if (existing) {
+            if (existing.type === this._cursor.item.type && existing.count < 64) {
+              existing.count += 1;
+              this._cursor.item.count -= 1;
+              if (this._cursor.item.count <= 0) {
+                this._cursor.item = null;
+                this._destroyCursorGhost();
+              }
+            }
+          } else {
+            this._craftGrid[i] = { type: this._cursor.item.type, count: 1 };
+            this._cursor.item.count -= 1;
+            if (this._cursor.item.count <= 0) {
+              this._cursor.item = null;
+              this._destroyCursorGhost();
+            } else {
+              this._destroyCursorGhost();
+              this._createCursorGhost(this._cursor.item);
+            }
+          }
+          this._updateCraftResult();
+          this._updateCraftSlots();
+          this._updateInventoryUI();
+        }
       });
     });
 
     // Craft result click
-    resultSlot.addEventListener('click', () => {
-      const result = getCraftResult(this._craftGrid);
-      if (result) {
-        // Check if item can be added to inventory
-        if (this.inventory.addItem(result.type, result.count)) {
-          consumeCraftInput(this._craftGrid);
-          this._updateCraftResult();
-          this._updateInventoryUI();
-          this._updateCraftSlots();
-          this.audioManager.playSFX('craft');
-        } else {
-          // Inventory full — brief visual feedback
-          resultSlot.style.borderColor = '#FF4444';
-          setTimeout(() => { resultSlot.style.borderColor = '#FFD700'; }, 300);
-        }
+    resultSlot.addEventListener('click', (e) => {
+      if (e.shiftKey) {
+        this._craftResultShiftClick();
+        return;
       }
+      const result = getCraftResult(this._craftGrid);
+      if (!result) return;
+
+      if (this._cursor.item && this._cursor.item.type !== result.type) {
+        // Cursor有其他类型 → 不能操作
+        return;
+      }
+
+      if (this._cursor.item) {
+        // Cursor已有同类 → 堆叠
+        const space = 64 - this._cursor.item.count;
+        if (space <= 0) return;
+        const results = Math.floor(space / result.count);
+        if (results <= 0) return;
+        let crafted = 0;
+        for (let i = 0; i < results; i++) {
+          if (!getCraftResult(this._craftGrid)) break;
+          consumeCraftInput(this._craftGrid);
+          crafted++;
+        }
+        if (crafted > 0) {
+          this._cursor.item.count += result.count * crafted;
+          this._destroyCursorGhost();
+          this._createCursorGhost(this._cursor.item);
+          this.audioManager.playSFX('craft');
+        }
+      } else {
+        // Cursor空 → 取走1次到Cursor
+        this._cursor.item = { type: result.type, count: result.count };
+        consumeCraftInput(this._craftGrid);
+        this._createCursorGhost(this._cursor.item);
+        this.audioManager.playSFX('craft');
+      }
+      this._updateCraftResult();
+      this._updateCraftSlots();
+      this._updateInventoryUI();
     });
 
     // Initialize drag-and-drop from inventory slots to crafting grid
@@ -629,10 +730,29 @@ class Game {
 
     // Touch-based inventory interaction (mobile) — tap to pick up, tap to place
     this._touchDragState = null;
+    this._touchTimer = null;
+    this._touchLongPressed = false;
+    this._touchTarget = null;
+
+    // 触屏 Shift 按钮
+    this._touchShiftActive = false;
+    let shiftBtn = document.getElementById('touch-shift-btn');
+    if (!shiftBtn) {
+      shiftBtn = document.createElement('button');
+      shiftBtn.id = 'touch-shift-btn';
+      shiftBtn.className = 'touch-shift-btn';
+      shiftBtn.textContent = '⇧ Shift';
+      shiftBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this._touchShiftActive = !this._touchShiftActive;
+        shiftBtn.classList.toggle('active', this._touchShiftActive);
+      });
+      overlay.appendChild(shiftBtn);
+    }
 
     const onInvTouch = (e) => {
       if (!TouchController.detectTouchDevice()) return;
-      e.preventDefault(); // suppress click handler on mobile
+      e.preventDefault();
 
       const touch = e.changedTouches[0];
       const target = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -641,48 +761,54 @@ class Game {
 
       const type = slot.dataset.type;
       const index = parseInt(slot.dataset.index);
-      const srcArray = type === 'storage' ? this.inventory.storage : this.inventory.hotbar;
-      const item = srcArray[index];
 
-      if (!this._touchDragState) {
-        // Pick up item
-        if (!item) return;
-        this._touchDragState = { type, index };
-        slot.classList.add('touch-selected');
-      } else if (this._touchDragState.type === type && this._touchDragState.index === index) {
-        // Tap same slot — deselect
-        slot.classList.remove('touch-selected');
-        this._touchDragState = null;
-      } else {
-        // Place / swap items
-        const dstArray = type === 'storage' ? this.inventory.storage : this.inventory.hotbar;
-        const srcType = this._touchDragState.type;
-        const srcIdx = this._touchDragState.index;
-        const srcArray2 = srcType === 'storage' ? this.inventory.storage : this.inventory.hotbar;
-
-        const temp = dstArray[index];
-        dstArray[index] = srcArray2[srcIdx];
-        srcArray2[srcIdx] = temp;
-
-        // Update selected block if swapping into/out of hotbar
-        if (type === 'hotbar' && dstArray[index]) {
-          const it = dstArray[index];
-          if (it.type >= 1 && it.type <= MAX_BLOCK_TYPE) this.input.selectedBlock = it.type;
-        }
-        if (srcType === 'hotbar' && srcArray2[srcIdx]) {
-          const it = srcArray2[srcIdx];
-          if (it && it.type >= 1 && it.type <= MAX_BLOCK_TYPE) this.input.selectedBlock = it.type;
-        }
-
-        // Clear selection
-        document.querySelectorAll('.inv-slot.touch-selected').forEach(el => el.classList.remove('touch-selected'));
-        this._touchDragState = null;
-        this._updateInventoryUI();
+      // 长按检测：如果已经有长按计时器
+      if (!this._touchTimer) {
+        this._touchTimer = setTimeout(() => {
+          // 长按触发 → 右键操作（半组/放1个）
+          this._cursorHandleRightClick(type, index);
+          this._touchLongPressed = true;
+          this._touchTimer = null;
+        }, 500);
+        this._touchTarget = { type, index };
       }
     };
 
+    const onInvTouchEnd = (e) => {
+      if (!TouchController.detectTouchDevice()) return;
+
+      if (this._touchTimer) {
+        // 短按 → 左键操作
+        clearTimeout(this._touchTimer);
+        this._touchTimer = null;
+        if (!this._touchLongPressed && this._touchTarget) {
+          const touch = e.changedTouches[0];
+          const target = document.elementFromPoint(touch.clientX, touch.clientY);
+          const slot = target ? target.closest('.inv-slot') : null;
+          if (slot) {
+            const type = slot.dataset.type;
+            const index = parseInt(slot.dataset.index);
+            if (type === this._touchTarget.type && index === this._touchTarget.index) {
+              if (this._touchShiftActive) {
+                this._cursorShiftMove(type, index);
+                this._touchShiftActive = false;
+                const btn = document.getElementById('touch-shift-btn');
+                if (btn) btn.classList.remove('active');
+                return;
+              }
+              this._cursorHandleSlotClick(type, index);
+            }
+          }
+        }
+      }
+      this._touchLongPressed = false;
+      this._touchTarget = null;
+    };
+
     storageGrid.addEventListener('touchstart', onInvTouch, { passive: false });
+    storageGrid.addEventListener('touchend', onInvTouchEnd, { passive: false });
     hotbarRow.addEventListener('touchstart', onInvTouch, { passive: false });
+    hotbarRow.addEventListener('touchend', onInvTouchEnd, { passive: false });
   }
 
   _updateInventoryUI() {
@@ -905,6 +1031,8 @@ class Game {
       if (this.touchController && TouchController.detectTouchDevice()) {
         this.touchController.show();
       }
+      // 关闭背包时归还 cursor 物品
+      this._cursorReturnOnClose();
       // Clean up any active drag state
       this._destroyDragGhost();
       this._dragState = null;
@@ -997,85 +1125,360 @@ class Game {
   }
 
   _onInvSlotClick(type, index) {
-    // Suppress click handler if a drag-and-drop just completed (browser may fire click after mouseup)
-    if (this._dragCompleted) {
-      this._dragCompleted = false;
+    // 重定向到 cursor 系统
+    this._cursorHandleSlotClick(type, index);
+  }
+
+  // ===== Cursor 手持物品系统 (背包操作中转) =====
+
+  _createCursorGhost(item) {
+    this._destroyCursorGhost();
+    const ghost = document.createElement('div');
+    ghost.className = 'drag-ghost cursor-ghost';
+    ghost.id = 'cursor-ghost';
+    const preview = document.createElement('div');
+    preview.className = 'item-preview';
+    preview.classList.add(this._getItemClassName(item.type));
+    preview.textContent = EMOJI_MAP.get(item.type) || '🧱';
+    ghost.appendChild(preview);
+    if (item.count > 1) {
+      const countSpan = document.createElement('span');
+      countSpan.className = 'item-count';
+      countSpan.textContent = item.count;
+      ghost.appendChild(countSpan);
+    }
+    document.body.appendChild(ghost);
+    this._cursorGhost = ghost;
+  }
+
+  _destroyCursorGhost() {
+    if (this._cursorGhost) {
+      this._cursorGhost.remove();
+      this._cursorGhost = null;
+    }
+  }
+
+  _updateCursorGhost(e) {
+    if (this._cursorGhost) {
+      this._cursorGhost.style.left = (e.clientX - 20) + 'px';
+      this._cursorGhost.style.top = (e.clientY - 20) + 'px';
+    }
+  }
+
+  /** Cursor 主入口：处理所有格子类型的左键点击 */
+  _cursorHandleSlotClick(type, index) {
+    const array = type === 'storage' ? this.inventory.storage
+      : type === 'hotbar' ? this.inventory.hotbar : null;
+    const item = array ? array[index] : null;
+
+    if (this._cursor.item) {
+      // Cursor 有物品
+      if (!item) {
+        // 空格 → 放置
+        this._cursorPlace(type, index);
+      } else if (item.type === this._cursor.item.type) {
+        // 同类 → 堆叠
+        this._cursorStack(type, index);
+      } else {
+        // 不同类 → 交换
+        this._cursorSwap(type, index);
+      }
+    } else {
+      // Cursor 为空
+      if (item) {
+        // 有物品 → 拾取
+        this._cursorPickup(type, index);
+      }
+    }
+  }
+
+  _cursorPickup(type, index) {
+    const array = type === 'storage' ? this.inventory.storage : this.inventory.hotbar;
+    const item = array[index];
+    if (!item) return;
+    this._cursor.item = { type: item.type, count: item.count };
+    this._cursor.origin = { type, index };
+    array[index] = null;
+    this._createCursorGhost(this._cursor.item);
+    this._updateInventoryUI();
+  }
+
+  _cursorPlace(type, index) {
+    const array = type === 'storage' ? this.inventory.storage : this.inventory.hotbar;
+    array[index] = this._cursor.item;
+    this._cursor.item = null;
+    this._cursor.origin = null;
+    this._destroyCursorGhost();
+    this._updateInventoryUI();
+  }
+
+  _cursorStack(type, index) {
+    const MAX_STACK = 64;
+    const array = type === 'storage' ? this.inventory.storage : this.inventory.hotbar;
+    const target = array[index];
+    if (!target || target.type !== this._cursor.item.type) return;
+
+    const space = MAX_STACK - target.count;
+    if (space <= 0) {
+      // 满了 → 交换
+      this._cursorSwap(type, index);
       return;
     }
-    if (type === 'hotbar') {
-      this.inventory.selectedSlot = index;
-      const item = this.inventory.hotbar[index];
-      if (item && item.type >= 1 && item.type <= MAX_BLOCK_TYPE) {
-        this.input.selectedBlock = item.type;
-      }
-      this._updateInventoryUI();
-    } else if (type === 'storage') {
-      // Click storage item to move to hotbar
-      const item = this.inventory.storage[index];
-      if (item) {
-        // Find first empty hotbar slot or swap
-        const emptySlot = this.inventory.hotbar.indexOf(null);
-        if (emptySlot !== -1) {
-          this.inventory.hotbar[emptySlot] = item;
-          this.inventory.storage[index] = null;
-        } else {
-          // Swap with selected hotbar slot
-          const temp = this.inventory.hotbar[this.inventory.selectedSlot];
-          this.inventory.hotbar[this.inventory.selectedSlot] = item;
-          this.inventory.storage[index] = temp;
-          // Update selected block if the swapped item is a block
-          if (item.type >= 1 && item.type <= MAX_BLOCK_TYPE) {
-            this.input.selectedBlock = item.type;
-          } else if (temp && temp.type >= 1 && temp.type <= MAX_BLOCK_TYPE) {
-            this.input.selectedBlock = temp.type;
-          }
-        }
-        this._updateInventoryUI();
+
+    const amount = Math.min(space, this._cursor.item.count);
+    target.count += amount;
+    this._cursor.item.count -= amount;
+
+    if (this._cursor.item.count <= 0) {
+      this._cursor.item = null;
+      this._cursor.origin = null;
+      this._destroyCursorGhost();
+    } else {
+      this._destroyCursorGhost();
+      this._createCursorGhost(this._cursor.item);
+    }
+    this._updateInventoryUI();
+  }
+
+  _cursorSwap(type, index) {
+    const array = type === 'storage' ? this.inventory.storage : this.inventory.hotbar;
+    const temp = array[index];
+    array[index] = this._cursor.item;
+    this._cursor.item = temp;
+    this._cursor.origin = { type, index };
+    this._destroyCursorGhost();
+    this._createCursorGhost(this._cursor.item);
+    this._updateInventoryUI();
+  }
+
+  _cursorReturnOnClose() {
+    if (!this._cursor.item) return;
+
+    const { type, index } = this._cursor.origin;
+    const array = type ? (type === 'storage' ? this.inventory.storage : this.inventory.hotbar) : null;
+
+    // 1. 优先放回 origin
+    if (array && !array[index]) {
+      array[index] = this._cursor.item;
+      this._cursor.item = null;
+      this._cursor.origin = null;
+      this._destroyCursorGhost();
+      return;
+    }
+
+    // 2. 尝试找到空格放入
+    for (const sec of ['storage', 'hotbar']) {
+      const arr = sec === 'storage' ? this.inventory.storage : this.inventory.hotbar;
+      const emptyIdx = arr.indexOf(null);
+      if (emptyIdx !== -1) {
+        arr[emptyIdx] = this._cursor.item;
+        this._cursor.item = null;
+        this._cursor.origin = null;
+        this._destroyCursorGhost();
+        return;
       }
     }
+
+    // 3. 背包满 → 丢弃
+    console.warn('背包已满，物品已丢弃:', this._cursor.item);
+    this._cursor.item = null;
+    this._cursor.origin = null;
+    this._destroyCursorGhost();
+  }
+
+  _cursorHandleRightClick(type, index) {
+    const array = type === 'storage' ? this.inventory.storage : this.inventory.hotbar;
+    const item = array[index];
+
+    if (this._cursor.item) {
+      // Cursor 有物品 → 放置1个
+      const cursorItem = this._cursor.item;
+      if (!item) {
+        // 空格 → 直接放1个
+        array[index] = { type: cursorItem.type, count: 1 };
+        cursorItem.count -= 1;
+      } else if (item.type === cursorItem.type && item.count < 64) {
+        // 同类 → 堆叠1个
+        item.count += 1;
+        cursorItem.count -= 1;
+      } else {
+        // 不同类或满了 → 不操作
+        return;
+      }
+      if (cursorItem.count <= 0) {
+        this._cursor.item = null;
+        this._cursor.origin = null;
+        this._destroyCursorGhost();
+      } else {
+        this._destroyCursorGhost();
+        this._createCursorGhost(cursorItem);
+      }
+    } else {
+      // Cursor 为空 → 拾取半组
+      if (!item) return;
+      const half = Math.ceil(item.count / 2);
+      this._cursor.item = { type: item.type, count: half };
+      this._cursor.origin = { type, index };
+      item.count -= half;
+      if (item.count <= 0) array[index] = null;
+      this._createCursorGhost(this._cursor.item);
+    }
+    this._updateInventoryUI();
+  }
+
+  _cursorShiftMove(type, index) {
+    const array = type === 'storage' ? this.inventory.storage
+      : type === 'hotbar' ? this.inventory.hotbar : null;
+    if (!array) return;
+    const item = array[index];
+    if (!item) return;
+
+    // 确定目标区域
+    const isStorage = type === 'storage';
+    const targetArray = isStorage ? this.inventory.hotbar : this.inventory.storage;
+    const MAX_STACK = 64;
+
+    // 1. 先找同类堆叠
+    let targetIdx = targetArray.findIndex(s => s && s.type === item.type && s.count < MAX_STACK);
+    if (targetIdx === -1) {
+      // 2. 再找空格
+      targetIdx = targetArray.indexOf(null);
+    }
+    if (targetIdx === -1) return; // 目标区满
+
+    const target = targetArray[targetIdx];
+    if (target) {
+      // 同类堆叠
+      const space = MAX_STACK - target.count;
+      const amount = Math.min(space, item.count);
+      target.count += amount;
+      item.count -= amount;
+      if (item.count <= 0) array[index] = null;
+    } else {
+      // 空格
+      targetArray[targetIdx] = item;
+      array[index] = null;
+    }
+
+    this._updateInventoryUI();
+  }
+
+  _cursorShiftMoveFromCraft(craftIndex) {
+    // 合成格 → 背包
+    if (!this._craftGrid[craftIndex]) return;
+    const item = this._craftGrid[craftIndex];
+    if (this.inventory.addItem(item.type, item.count)) {
+      this._craftGrid[craftIndex] = null;
+      this._updateCraftResult();
+      this._updateCraftSlots();
+      this._updateInventoryUI();
+    }
+  }
+
+  _craftResultShiftClick() {
+    let crafted = 0;
+    const startCount = this._craftGrid.filter(s => s !== null).length;
+    if (startCount === 0) return;
+
+    while (true) {
+      const result = getCraftResult(this._craftGrid);
+      if (!result) break;
+      if (this.inventory.addItem(result.type, result.count)) {
+        consumeCraftInput(this._craftGrid);
+        crafted++;
+      } else {
+        break; // 背包满
+      }
+    }
+
+    if (crafted > 0) {
+      this.audioManager.playSFX('craft');
+      this._updateCraftResult();
+      this._updateInventoryUI();
+      this._updateCraftSlots();
+    }
+  }
+
+  _cursorDragToCraft(craftIndex) {
+    if (!this._dragState) return;
+    const { sourceType, sourceIndex, item } = this._dragState;
+    const sourceArray = sourceType === 'storage' ? this.inventory.storage : this.inventory.hotbar;
+    const currentItem = sourceArray[sourceIndex];
+    if (!currentItem || currentItem.type !== item.type) return;
+
+    const existing = this._craftGrid[craftIndex];
+    if (existing && existing.type === item.type && existing.count < 64) {
+      // 同类堆叠
+      existing.count += 1;
+      currentItem.count -= 1;
+      if (currentItem.count <= 0) sourceArray[sourceIndex] = null;
+    } else if (existing && existing.type !== item.type) {
+      // 不同类型 → 交换：先把现有的退回背包，再放1个
+      this.inventory.addItem(existing.type, existing.count);
+      currentItem.count -= 1;
+      if (currentItem.count <= 0) sourceArray[sourceIndex] = null;
+      this._craftGrid[craftIndex] = { type: item.type, count: 1 };
+    } else if (!existing) {
+      // 空格
+      currentItem.count -= 1;
+      if (currentItem.count <= 0) sourceArray[sourceIndex] = null;
+      this._craftGrid[craftIndex] = { type: item.type, count: 1 };
+    }
+    this._updateCraftResult();
+    this._updateInventoryUI();
+    this._updateCraftSlots();
+  }
+
+  _cursorDragToSlot(dstType, dstIndex) {
+    if (!this._dragState) return;
+    const { sourceType, sourceIndex, item } = this._dragState;
+    const srcArray = sourceType === 'storage' ? this.inventory.storage : this.inventory.hotbar;
+    const dstArray = dstType === 'storage' ? this.inventory.storage : this.inventory.hotbar;
+
+    const currentItem = srcArray[sourceIndex];
+    if (!currentItem || currentItem.type !== item.type || currentItem.count !== item.count) return;
+
+    // Drag = 拾取+放置 = 交换
+    const tmp = dstArray[dstIndex];
+    dstArray[dstIndex] = currentItem;
+    srcArray[sourceIndex] = tmp;
+
+    this._updateInventoryUI();
   }
 
   // ===== Drag-and-Drop: Inventory to Crafting Grid =====
 
   _setupDragAndDrop() {
-    this._dragState = null;   // { sourceType, sourceIndex, item, startX, startY, isDragging }
-    this._dragGhost = null;   // ghost DOM element
-    this._dragCompleted = false; // flag to suppress click after drag
+    this._dragState = null;
+    this._dragGhost = null;
+    this._dragCompleted = false;
 
     const storageGrid = document.getElementById('storage-grid');
     const hotbarRow = document.getElementById('inventory-hotbar');
 
     if (!storageGrid || !hotbarRow) return;
 
-    // Start drag from storage slots
-    storageGrid.addEventListener('mousedown', (e) => {
+    const startDrag = (e, type) => {
       const slot = e.target.closest('.inv-slot');
       if (!slot) return;
       const index = parseInt(slot.dataset.index);
-      this._onDragStart(e, 'storage', index);
-    });
+      const array = type === 'storage' ? this.inventory.storage : this.inventory.hotbar;
+      const item = array[index];
+      if (!item) return;
+      this._dragState = { sourceType: type, sourceIndex: index, item: { ...item }, isDragging: false, startX: e.clientX, startY: e.clientY };
+    };
 
-    // Start drag from hotbar slots
-    hotbarRow.addEventListener('mousedown', (e) => {
-      const slot = e.target.closest('.inv-slot');
-      if (!slot) return;
-      const index = parseInt(slot.dataset.index);
-      this._onDragStart(e, 'hotbar', index);
-    });
+    storageGrid.addEventListener('mousedown', (e) => startDrag(e, 'storage'));
+    hotbarRow.addEventListener('mousedown', (e) => startDrag(e, 'hotbar'));
 
-    // Move ghost element and end drag on document
     document.addEventListener('mousemove', (e) => {
       if (!this._dragState) return;
-
       const dx = e.clientX - this._dragState.startX;
       const dy = e.clientY - this._dragState.startY;
-
       if (!this._dragState.isDragging && Math.sqrt(dx * dx + dy * dy) > 5) {
-        // Threshold exceeded — start dragging
         this._dragState.isDragging = true;
         this._createDragGhost(this._dragState.item);
       }
-
       if (this._dragState.isDragging && this._dragGhost) {
         this._dragGhost.style.left = (e.clientX - 20) + 'px';
         this._dragGhost.style.top = (e.clientY - 20) + 'px';
@@ -1084,24 +1487,29 @@ class Game {
 
     document.addEventListener('mouseup', (e) => {
       if (!this._dragState) return;
-
       if (this._dragState.isDragging) {
-        // Check if dropped on a crafting grid slot
         const target = document.elementFromPoint(e.clientX, e.clientY);
+        const targetSlot = target ? target.closest('.inv-slot') : null;
         const craftSlot = target ? target.closest('.craft-slot') : null;
 
         if (craftSlot) {
+          // 拖到合成格
           const craftIndex = parseInt(craftSlot.dataset.index);
           if (!isNaN(craftIndex) && craftIndex >= 0 && craftIndex < 4) {
-            this._dragToCraftSlot(craftIndex);
+            this._cursorDragToCraft(craftIndex);
+          }
+        } else if (targetSlot) {
+          // 拖到背包格 → 走 cursor 快捷方式（拾取+放置）
+          const dstType = targetSlot.dataset.type;
+          const dstIndex = parseInt(targetSlot.dataset.index);
+          if (dstType && !isNaN(dstIndex)) {
+            this._cursorDragToSlot(dstType, dstIndex);
           }
         }
-        // If not over a crafting slot, cancel — item stays in original slot
-
+        // 拖到其他地方 → 取消（物品留在原位）
         this._destroyDragGhost();
         this._dragCompleted = true;
       }
-
       this._dragState = null;
     });
   }

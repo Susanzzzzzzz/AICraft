@@ -63,7 +63,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         setContentView(webView)
-        webView.loadUrl("file:///android_asset/index.html")
+        webView.loadUrl("file:///android_asset/index.html?platform=android")
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {

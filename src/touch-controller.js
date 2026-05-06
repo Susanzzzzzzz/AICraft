@@ -63,6 +63,12 @@ export class TouchController {
    * 检测触摸设备
    */
   static detectTouchDevice() {
+    // 1. 显式平台参数（Android APK 注入）
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('platform') === 'android') return true;
+    } catch (_) {}
+    // 2. 浏览器 API 探测
     return ('ontouchstart' in window || navigator.maxTouchPoints > 0) && window.innerWidth < 1600;
   }
 
