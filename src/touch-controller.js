@@ -63,7 +63,7 @@ export class TouchController {
    * 检测触摸设备
    */
   static detectTouchDevice() {
-    return 'ontouchstart' in window && window.innerWidth < 1024;
+    return ('ontouchstart' in window || navigator.maxTouchPoints > 0) && window.innerWidth < 1600;
   }
 
   /**
