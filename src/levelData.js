@@ -4,6 +4,33 @@ import { MCLevel } from './MCLevel.js';
 
 export const LEVELS = [
   new MCLevel({
+    id: 'level_000',
+    name: '烦人的村民',
+    description: '欢迎来到村民村！这里的村民特别"热情"……',
+    tasks: [
+      { id: 't1', type: 'greet', target: 0, count: 8, current: 0, description: '跟 8 个村民打招呼（靠近即可）' },
+      { id: 't2', type: 'push', target: 0, count: 5, current: 0, description: '推开 5 个挡路的村民' },
+      { id: 't3', type: 'collect', target: ITEM.PLANK, count: 16, current: 0, description: '收集 16 个木板（村民送的）' },
+      { id: 't4', type: 'explore', target: 0, count: 1, current: 0, description: '探索整个村庄', optional: true },
+    ],
+    rewards: [],
+    unlockSkills: ['mc_mine_001'],
+    terrains: [{ id: 'default', name: '村民村', seedOffset: 999, biomeType: 'plains', waterLevel: 28,
+      prefabs: [
+        { file: 'cabin', minCount: 4, maxCount: 6 },
+        { file: 'watchtower', minCount: 1, maxCount: 2 },
+        { file: 'well', minCount: 1, maxCount: 2 },
+        { file: 'fountain', minCount: 1, maxCount: 1 },
+        { file: 'sakura_pavilion', minCount: 1, maxCount: 1 },
+        { file: 'lamp_post', minCount: 4, maxCount: 8 },
+        { file: 'tent', minCount: 2, maxCount: 4 },
+        { file: 'bush', minCount: 2, maxCount: 4 },
+        { file: 'rocks', minCount: 0, maxCount: 2 },
+      ]
+    }],
+  }),
+
+  new MCLevel({
     id: 'level_001',
     name: '草原起点',
     description: '在草原上收集基础资源，熟悉操作',

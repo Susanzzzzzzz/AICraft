@@ -439,7 +439,9 @@ class Game {
   _spawnVillagers() {
     if (typeof Villager === 'undefined') return;
     this.villagers = [];
-    const count = 3 + Math.floor(Math.random() * 3); // 3-5
+    // 村民村大量生成
+    const isVillagerLevel = this.currentLevel && this.currentLevel.id === 'level_000';
+    const count = isVillagerLevel ? 15 + Math.floor(Math.random() * 6) : 3 + Math.floor(Math.random() * 3);
     for (let i = 0; i < count; i++) {
       const x = 5 + Math.random() * (this.world.width - 10);
       const z = 5 + Math.random() * (this.world.depth - 10);
@@ -3433,6 +3435,8 @@ class Game {
 
   _spawnHostiles() {
     if (this.uiState !== 'gameplay') return;
+    // 村民村不刷怪
+    if (this.currentLevel && this.currentLevel.id === 'level_000') return;
     const alive = this.hostiles.filter(m => !m.dead).length;
     if (alive >= 8) return;
 
