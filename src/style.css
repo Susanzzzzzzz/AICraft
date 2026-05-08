@@ -376,6 +376,25 @@ body {
   border-radius: 4px;
 }
 
+/* HUD 装备等级色图标 */
+.hud-equip-icon {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  border-radius: 3px;
+  font-size: clamp(10px, 1.2vmin, 14px);
+  margin: 0 1px;
+  vertical-align: middle;
+}
+.hud-equip-icon.tier-leather    { background: rgba(161,136,127,0.5); }
+.hud-equip-icon.tier-iron       { background: rgba(176,190,197,0.5); }
+.hud-equip-icon.tier-diamond    { background: rgba(128,222,234,0.5); }
+.hud-equip-icon.tier-netherite  { background: rgba(206,147,216,0.5); }
+.hud-equip-icon.tier-wood       { background: rgba(141,110,99,0.4); }
+.hud-equip-icon.tier-stone      { background: rgba(158,158,158,0.4); }
+
 /* ===== 背包界面 ===== */
 #inventory-overlay {
   position: fixed;
@@ -492,6 +511,55 @@ body {
   grid-template-columns: repeat(6, 40px);
   gap: 3px;
   margin-bottom: 8px;
+}
+
+/* 武器栏 */
+.weapon-slot-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 4px 0;
+}
+.section-label {
+  font-size: 11px;
+  color: #999;
+  white-space: nowrap;
+}
+.weapon-slot {
+  width: 44px;
+  height: 44px;
+  border: 2px solid #ff9800;
+  border-radius: 6px;
+  background: rgba(255,152,0,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.weapon-slot:hover {
+  border-color: #ffc107;
+  background: rgba(255,152,0,0.15);
+}
+.weapon-slot.has-item {
+  border-color: #ffc107;
+  background: rgba(255,152,0,0.12);
+}
+.weapon-label { color: #ff9800; }
+.armor-label { color: #4FC3F7; }
+
+/* 存储分区 */
+.storage-section-divider {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  grid-column: 1 / -1;
+  font-size: 10px;
+  color: #666;
+  padding: 2px 2px;
+  margin: 2px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
 .hotbar-row {
@@ -694,6 +762,39 @@ body {
 .item-preview.clay             { background: #90A4AE; }
 .item-preview.lily_pad         { background: #4CAF50; }
 .item-preview.reed             { background: #827717; }
+
+/* ===== 装备等级色 (Tier Colors) ===== */
+/* 防具背景 */
+.item-preview.leather_helmet,
+.item-preview.leather_chestplate,
+.item-preview.leather_leggings,
+.item-preview.leather_boots      { background: #A1887F; }
+
+.item-preview.iron_helmet,
+.item-preview.iron_chestplate,
+.item-preview.iron_leggings,
+.item-preview.iron_boots         { background: #B0BEC5; }
+
+.item-preview.diamond_helmet,
+.item-preview.diamond_chestplate_new,
+.item-preview.diamond_leggings,
+.item-preview.diamond_boots      { background: #80DEEA; }
+
+.item-preview.netherite_helmet,
+.item-preview.netherite_chestplate,
+.item-preview.netherite_leggings,
+.item-preview.netherite_boots    { background: #CE93D8; }
+
+/* 等级色边框标识 (额外层) */
+.item-preview.tier-leather    { box-shadow: inset 0 0 0 2px rgba(161,136,127,0.5); }
+.item-preview.tier-iron       { box-shadow: inset 0 0 0 2px rgba(176,190,197,0.7); }
+.item-preview.tier-diamond    { box-shadow: inset 0 0 0 2px rgba(128,222,234,0.8); }
+.item-preview.tier-netherite  { box-shadow: inset 0 0 0 2px rgba(206,147,216,0.8), 0 0 6px rgba(206,147,216,0.4); }
+.item-preview.tier-wood       { box-shadow: inset 0 0 0 2px rgba(141,110,99,0.4); }
+.item-preview.tier-stone      { box-shadow: inset 0 0 0 2px rgba(158,158,158,0.5); }
+.item-preview.tier-bow        { box-shadow: inset 0 0 0 2px rgba(255,193,7,0.5); }
+.item-preview.tier-frostmourne { box-shadow: 0 0 8px rgba(79,195,247,0.6); }
+.item-preview.tier-dragon     { box-shadow: 0 0 8px rgba(255,87,34,0.6); }
 
 /* ===== Pause Screen ===== */
 #pause-screen h1 {
@@ -979,6 +1080,29 @@ body {
   font-size: 12px;
 }
 
+/* 触屏折叠按钮 */
+.level-toggle-btn {
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.25s ease;
+  font-size: 10px;
+  margin-right: 2px;
+  display: inline-block;
+}
+/* 折叠状态：收起任务列表 */
+.level-info-collapsed #level-task-list {
+  display: none;
+}
+.level-info-expanded #level-task-list {
+  display: flex;
+}
+.level-info-collapsed .level-toggle-btn {
+  transform: rotate(0deg);
+}
+.level-info-expanded .level-toggle-btn {
+  transform: rotate(90deg);
+}
+
 /* 任务列表 */
 #level-task-list {
   display: flex;
@@ -987,6 +1111,9 @@ body {
   border-top: 1px solid rgba(255,255,255,0.15);
   padding-top: 4px;
   margin-top: 2px;
+}
+#level-info.level-info-collapsed {
+  pointer-events: auto;
 }
 
 .task-item {

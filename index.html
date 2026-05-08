@@ -61,9 +61,6 @@
             <button id="continue-btn">▶ 继续游戏</button>
             <button id="pause-reset-btn">↺ 重置到出生点</button>
             <button id="pause-level-select-btn">关卡选择</button>
-            <button class="touch-only" data-action="skillUseExplore">使用技能</button>
-            <button class="touch-only" data-action="skillCycleExplore">切换技能</button>
-            <button class="touch-only" data-action="toggleCamera">切换视角</button>
             <button class="touch-only" data-action="help">帮助</button>
           </div>
           <div id="pause-volume">
@@ -219,9 +216,10 @@
       <div id="bow-charge-label">蓄力中...</div>
     </div>
 
-    <!-- 关卡信息 -->
-    <div id="level-info" class="top-info-item">
+    <!-- 关卡信息 (触屏可折叠) -->
+    <div id="level-info" class="top-info-item level-info-collapsed">
       <div id="level-header">
+        <span id="level-toggle-btn" class="level-toggle-btn touch-only">▶</span>
         <span id="level-name"></span>
         <span id="level-tasks"></span>
       </div>
@@ -257,8 +255,12 @@
         <h2>背包</h2>
         <button id="inventory-close-btn" class="inventory-close-btn">×</button>
         <div class="inventory-layout">
-          <!-- Left: storage + hotbar -->
+          <!-- Left: weapon slot + storage + hotbar -->
           <div class="inventory-left">
+            <div class="weapon-slot-container">
+              <div class="section-label weapon-label">⚔️ 武器栏</div>
+              <div class="weapon-slot" id="weapon-slot"></div>
+            </div>
             <div class="storage-grid" id="storage-grid"></div>
             <div class="hotbar-row" id="inventory-hotbar"></div>
           </div>

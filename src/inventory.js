@@ -27,18 +27,46 @@ export class ItemStack {
 
 export class Inventory {
   constructor() {
-    this.hotbar = new Array(8).fill(null);   // indices 0-7
-    this.storage = new Array(72).fill(null); // indices 0-71 (2 pages × 36)
+    this.hotbar = new Array(8).fill(null);   // indices 0-7 (blocks/tools/materials only)
+    this.storage = new Array(108).fill(null); // indices 0-107 (blocks/materials only)
     this.selectedSlot = 0;                   // 0-7 hotbar index
-    this.currentPage = 0;                    // 0 or 1
+    this.currentPage = 0;                    // 0, 1, or 2
     this.armorSlots = { head: null, chest: null, legs: null, feet: null };
+    this.weaponSlot = null;                  // dedicated weapon slot
   }
 
   getSelectedItem() {
-    return this.hotbar[this.selectedSlot];
+    // If current hotbar slot has an item, return it
+    const hotbarItem = this.hotbar[this.selectedSlot];
+    if (hotbarItem) return hotbarItem;
+    // If no item in hotbar slot but weaponSlot exists, auto-show weaponSlot item
+    return this.weaponSlot;
   }
 
   addItem(type, count = 1) {
+    const cat = this.getItemCategory(type);
+    // Weapons go to weaponSlot (or swap)
+    if (cat === 'weapon') {
+      if (this.weaponSlot) {
+        const existing = this.weaponSlot;
+        if (existing.type === type && existing.count < 64) {
+          const canAdd = Math.min(count, 64 - existing.count);
+          existing.count += canAdd;
+          return count - canAdd === 0;
+        }
+        // Different weapon — swap
+        const old = existing;
+        this.weaponSlot = { type, count };
+        this.addItem(old.type, old.count);
+        return true;
+      }
+      this.weaponSlot = { type, count };
+      return true;
+    }
+    // Armor goes through equipArmor (handled separately)
+    if (cat === 'armor') {
+      return this.equipArmor(type, count);
+    }
     let remaining = count;
     // First: stack onto existing items
     for (const slots of [this.hotbar, this.storage]) {
@@ -106,6 +134,7 @@ export class Inventory {
       hotbar: this.hotbar.map(s => s ? { type: s.type, count: s.count } : null),
       storage: this.storage.map(s => s ? { type: s.type, count: s.count } : null),
       selectedSlot: this.selectedSlot,
+      weaponSlot: this.weaponSlot ? { type: this.weaponSlot.type, count: this.weaponSlot.count } : null,
       armor: {
         head: this.armorSlots.head ? { type: this.armorSlots.head.type, count: this.armorSlots.head.count } : null,
         chest: this.armorSlots.chest ? { type: this.armorSlots.chest.type, count: this.armorSlots.chest.count } : null,
@@ -120,8 +149,9 @@ export class Inventory {
     this.hotbar = (data.hotbar || []).map(s => s ? new ItemStack(s.type, s.count) : null);
     while (this.hotbar.length < 8) this.hotbar.push(null);
     this.storage = (data.storage || []).map(s => s ? new ItemStack(s.type, s.count) : null);
-    while (this.storage.length < 72) this.storage.push(null);
+    while (this.storage.length < 108) this.storage.push(null);
     this.selectedSlot = data.selectedSlot || 0;
+    this.weaponSlot = data.weaponSlot ? { type: data.weaponSlot.type, count: data.weaponSlot.count } : null;
     // Restore armor slots
     if (data.armor) {
       this.armorSlots.head = data.armor.head ? new ItemStack(data.armor.head.type, data.armor.head.count) : null;
@@ -171,8 +201,91 @@ export class Inventory {
     return false;
   }
 
+  /** Categorize item type */
+  getItemCategory(type) {
+    // weapons (swords + special)
+    if ((type >= 102 && type <= 106) || type === 111 || type === 112) return 'weapon';
+    // tools (pickaxes, axes, shovels) — can be weapons or tools
+    if (type >= 114 && type <= 125) return 'tool';
+    // armor
+    if (ARMOR_SLOT_MAP[type]) return 'armor';
+    // blocks
+    if (type >= 1 && type <= 27) return 'block';
+    // everything else = material
+    return 'material';
+  }
+
+  /** Check if item type can be placed in given slot category */
+  canPlaceInSlot(itemType, slotType) {
+    const cat = this.getItemCategory(itemType);
+    if (cat === 'weapon') return slotType === 'weaponSlot';
+    if (cat === 'armor') return slotType === 'armorSlot';
+    if (cat === 'tool') return true; // tools can go anywhere
+    return slotType !== 'weaponSlot'; // blocks/materials → hotbar/storage
+  }
+
+  /** Equip weapon (with swap logic) */
+  equipWeapon(itemType, count = 1) {
+    const cat = this.getItemCategory(itemType);
+    if (cat !== 'weapon' && cat !== 'tool') return false;
+    const existing = this.weaponSlot;
+    if (existing) {
+      // Swap: put current weapon back, equip new one
+      if (this.getItemCategory(existing.type) === 'tool') {
+        // tools can go to storage/hotbar
+        if (this.addItem(existing.type, existing.count)) {
+          this.weaponSlot = { type: itemType, count: 1 };
+          this.removeItem(itemType, 1);
+          return true;
+        }
+        return false;
+      }
+      // weapon → weapon swap
+      this.weaponSlot = { type: itemType, count: 1 };
+      this.removeItem(itemType, 1);
+      if (existing) this.addItem(existing.type, existing.count);
+      return true;
+    }
+    this.weaponSlot = { type: itemType, count: 1 };
+    this.removeItem(itemType, 1);
+    return true;
+  }
+
+  /** Unequip weapon to storage (bypasses weaponSlot routing) */
+  unequipWeapon() {
+    if (!this.weaponSlot) return false;
+    const item = this.weaponSlot;
+    // Find empty slot in storage or hotbar
+    const emptyIdx = this.storage.indexOf(null);
+    if (emptyIdx !== -1) {
+      this.storage[emptyIdx] = item;
+      this.weaponSlot = null;
+      return true;
+    }
+    const emptyHotbar = this.hotbar.indexOf(null);
+    if (emptyHotbar !== -1) {
+      this.hotbar[emptyHotbar] = item;
+      this.weaponSlot = null;
+      return true;
+    }
+    return false;
+  }
+
+  /** Get equipped weapon type ID (or null) */
+  getEquippedWeaponType() {
+    return this.weaponSlot ? this.weaponSlot.type : null;
+  }
+
   getWeaponIds() {
     const weapons = [];
+    // Include weaponSlot
+    if (this.weaponSlot && (
+      (this.weaponSlot.type >= 102 && this.weaponSlot.type <= 106) ||
+      this.weaponSlot.type === 111 || this.weaponSlot.type === 112 ||
+      (this.weaponSlot.type >= 114 && this.weaponSlot.type <= 125)
+    )) {
+      if (!weapons.includes(this.weaponSlot.type)) weapons.push(this.weaponSlot.type);
+    }
     for (const slots of [this.hotbar, this.storage]) {
       for (const slot of slots) {
         if (slot && (

@@ -25,6 +25,7 @@ import { getSkill } from './skillLibrary.js';
 import { MCSkill } from './MCSkill.js';
 import { WeatherManager } from './weather.js';
 import { HostileMob, Zombie, Skeleton, Spider, Creeper, Enderman, Wolf, CaveSpider, DropItem } from './hostiles.js';
+import { Villager } from './villager.js';
 import { Diagnostics } from './diagnostics.js';
 
 const SAVE_KEY = 'aicraft_save_v4';
@@ -46,23 +47,23 @@ const EMOJI_MAP = new Map([
   // Crafted materials
   [ITEM.PLANK, '🪵'], [ITEM.STICK, '🥢'],
   // Weapons — swords
-  [ITEM.SWORD_WOOD, '🗡️'], [ITEM.SWORD_STONE, '🗡️'], [ITEM.SWORD_IRON, '🗡️'],
-  [ITEM.SWORD_DIAMOND, '🗡️'], [ITEM.SWORD_NETHERITE, '🗡️'],
-  [ITEM.SWORD_FROSTMOURNE, '🗡️'], [ITEM.SWORD_DRAGON, '🗡️'],
+  [ITEM.SWORD_WOOD, '🪵'], [ITEM.SWORD_STONE, '🪨'], [ITEM.SWORD_IRON, '⚔️'],
+  [ITEM.SWORD_DIAMOND, '💎'], [ITEM.SWORD_NETHERITE, '🔮'],
+  [ITEM.SWORD_FROSTMOURNE, '❄️'], [ITEM.SWORD_DRAGON, '🐉'],
   // Materials
   [ITEM.DIAMOND, '💎'], [ITEM.DIAMOND_CHESTPLATE, '🛡️'], [ITEM.IRON_INGOT, '⛏️'],
   [ITEM.NETHERITE_SCRAP, '💎'], [ITEM.SLIME_BALL, '🟢'],
   // Tools
-  [ITEM.PICKAXE_WOOD, '⛏️'], [ITEM.PICKAXE_STONE, '⛏️'], [ITEM.PICKAXE_IRON, '⛏️'], [ITEM.PICKAXE_DIAMOND, '⛏️'],
-  [ITEM.AXE_WOOD, '⛏️'], [ITEM.AXE_STONE, '⛏️'], [ITEM.AXE_IRON, '⛏️'], [ITEM.AXE_DIAMOND, '⛏️'],
-  [ITEM.SHOVEL_WOOD, '⛏️'], [ITEM.SHOVEL_STONE, '⛏️'], [ITEM.SHOVEL_IRON, '⛏️'], [ITEM.SHOVEL_DIAMOND, '⛏️'],
+  [ITEM.PICKAXE_WOOD, '🪵'], [ITEM.PICKAXE_STONE, '🪨'], [ITEM.PICKAXE_IRON, '⚔️'], [ITEM.PICKAXE_DIAMOND, '💎'],
+  [ITEM.AXE_WOOD, '🪵'], [ITEM.AXE_STONE, '🪨'], [ITEM.AXE_IRON, '⚔️'], [ITEM.AXE_DIAMOND, '💎'],
+  [ITEM.SHOVEL_WOOD, '🪵'], [ITEM.SHOVEL_STONE, '🪨'], [ITEM.SHOVEL_IRON, '⚔️'], [ITEM.SHOVEL_DIAMOND, '💎'],
   // Ranged
   [ITEM.BOW, '🏹'], [ITEM.ARROW, '➵'],
   // Armor
-  [ITEM.LEATHER_HELMET, '🛡️'], [ITEM.IRON_HELMET, '🛡️'], [ITEM.DIAMOND_HELMET, '🛡️'], [ITEM.NETHERITE_HELMET, '🛡️'],
-  [ITEM.LEATHER_CHESTPLATE, '🛡️'], [ITEM.IRON_CHESTPLATE, '🛡️'], [ITEM.DIAMOND_CHESTPLATE_NEW, '🛡️'], [ITEM.NETHERITE_CHESTPLATE, '🛡️'],
-  [ITEM.LEATHER_LEGGINGS, '🛡️'], [ITEM.IRON_LEGGINGS, '🛡️'], [ITEM.DIAMOND_LEGGINGS, '🛡️'], [ITEM.NETHERITE_LEGGINGS, '🛡️'],
-  [ITEM.LEATHER_BOOTS, '🛡️'], [ITEM.IRON_BOOTS, '🛡️'], [ITEM.DIAMOND_BOOTS, '🛡️'], [ITEM.NETHERITE_BOOTS, '🛡️'],
+  [ITEM.LEATHER_HELMET, '🟤'], [ITEM.IRON_HELMET, '⚪'], [ITEM.DIAMOND_HELMET, '🔵'], [ITEM.NETHERITE_HELMET, '🟣'],
+  [ITEM.LEATHER_CHESTPLATE, '🟤'], [ITEM.IRON_CHESTPLATE, '⚪'], [ITEM.DIAMOND_CHESTPLATE_NEW, '🔵'], [ITEM.NETHERITE_CHESTPLATE, '🟣'],
+  [ITEM.LEATHER_LEGGINGS, '🟤'], [ITEM.IRON_LEGGINGS, '⚪'], [ITEM.DIAMOND_LEGGINGS, '🔵'], [ITEM.NETHERITE_LEGGINGS, '🟣'],
+  [ITEM.LEATHER_BOOTS, '🟤'], [ITEM.IRON_BOOTS, '⚪'], [ITEM.DIAMOND_BOOTS, '🔵'], [ITEM.NETHERITE_BOOTS, '🟣'],
   // Misc
   [ITEM.GUNPOWDER, '💥'], [ITEM.ENDER_PEARL, '👁️'], [ITEM.COBBLESTONE, '🪨'],
 ]);
@@ -74,6 +75,43 @@ const TOOLTIP_ARMOR_DEF = {
   [ITEM.LEATHER_LEGGINGS]: 2, [ITEM.IRON_LEGGINGS]: 5, [ITEM.DIAMOND_LEGGINGS]: 6, [ITEM.NETHERITE_LEGGINGS]: 6,
   [ITEM.LEATHER_BOOTS]: 1, [ITEM.IRON_BOOTS]: 2, [ITEM.DIAMOND_BOOTS]: 3, [ITEM.NETHERITE_BOOTS]: 3,
 };
+
+// 装备等级色映射 — 按材质等级返回 CSS class
+const TIER_CLASS_MAP = {
+  // 防具 — 皮革
+  [ITEM.LEATHER_HELMET]: 'tier-leather', [ITEM.LEATHER_CHESTPLATE]: 'tier-leather',
+  [ITEM.LEATHER_LEGGINGS]: 'tier-leather', [ITEM.LEATHER_BOOTS]: 'tier-leather',
+  // 防具 — 铁
+  [ITEM.IRON_HELMET]: 'tier-iron', [ITEM.IRON_CHESTPLATE]: 'tier-iron',
+  [ITEM.IRON_LEGGINGS]: 'tier-iron', [ITEM.IRON_BOOTS]: 'tier-iron',
+  // 防具 — 钻石
+  [ITEM.DIAMOND_HELMET]: 'tier-diamond', [ITEM.DIAMOND_CHESTPLATE_NEW]: 'tier-diamond',
+  [ITEM.DIAMOND_LEGGINGS]: 'tier-diamond', [ITEM.DIAMOND_BOOTS]: 'tier-diamond',
+  // 防具 — 下界合金
+  [ITEM.NETHERITE_HELMET]: 'tier-netherite', [ITEM.NETHERITE_CHESTPLATE]: 'tier-netherite',
+  [ITEM.NETHERITE_LEGGINGS]: 'tier-netherite', [ITEM.NETHERITE_BOOTS]: 'tier-netherite',
+  // 武器 — 木
+  [ITEM.SWORD_WOOD]: 'tier-wood', [ITEM.PICKAXE_WOOD]: 'tier-wood',
+  [ITEM.AXE_WOOD]: 'tier-wood', [ITEM.SHOVEL_WOOD]: 'tier-wood',
+  // 武器 — 石
+  [ITEM.SWORD_STONE]: 'tier-stone', [ITEM.PICKAXE_STONE]: 'tier-stone',
+  [ITEM.AXE_STONE]: 'tier-stone', [ITEM.SHOVEL_STONE]: 'tier-stone',
+  // 武器 — 铁
+  [ITEM.SWORD_IRON]: 'tier-iron', [ITEM.PICKAXE_IRON]: 'tier-iron',
+  [ITEM.AXE_IRON]: 'tier-iron', [ITEM.SHOVEL_IRON]: 'tier-iron',
+  // 武器 — 钻石
+  [ITEM.SWORD_DIAMOND]: 'tier-diamond', [ITEM.PICKAXE_DIAMOND]: 'tier-diamond',
+  [ITEM.AXE_DIAMOND]: 'tier-diamond', [ITEM.SHOVEL_DIAMOND]: 'tier-diamond',
+  // 武器 — 下界合金/特殊
+  [ITEM.SWORD_NETHERITE]: 'tier-netherite',
+  [ITEM.SWORD_FROSTMOURNE]: 'tier-frostmourne', [ITEM.SWORD_DRAGON]: 'tier-dragon',
+  // 弓
+  [ITEM.BOW]: 'tier-bow',
+};
+
+function getTierClass(itemType) {
+  return TIER_CLASS_MAP[itemType] || '';
+}
 
 class Game {
   constructor() {
@@ -88,6 +126,7 @@ class Game {
     this.characterPreview = null;
     this.animals = [];
     this.slimes = [];
+    this.villagers = [];
     this.running = false;
     this.lastTime = 0;
     this.frameCount = 0;
@@ -358,6 +397,12 @@ class Game {
       this.renderer.scene.remove(animal.group);
     }
     this.animals = [];
+    // Clean up villagers when resetting
+    for (const villager of (this.villagers || [])) {
+      if (villager.group) this.renderer.scene.remove(villager.group);
+      if (villager._disposeNameTag) villager._disposeNameTag();
+    }
+    this.villagers = [];
 
     const animalConfigs = [
       { cls: Pig, count: 3 },
@@ -371,6 +416,42 @@ class Game {
         this.animals.push(animal);
         this.renderer.scene.add(animal.group);
       }
+    }
+  }
+
+  _setupTaskBarToggle() {
+    const levelInfo = document.getElementById('level-info');
+    const toggleBtn = document.getElementById('level-toggle-btn');
+    if (!levelInfo || !toggleBtn) return;
+    if (TouchController.detectTouchDevice()) {
+      levelInfo.classList.add('level-info-collapsed');
+    } else {
+      levelInfo.classList.add('level-info-expanded');
+    }
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isCollapsed = levelInfo.classList.contains('level-info-collapsed');
+      levelInfo.classList.remove('level-info-collapsed', 'level-info-expanded');
+      levelInfo.classList.add(isCollapsed ? 'level-info-expanded' : 'level-info-collapsed');
+    });
+  }
+
+  _spawnVillagers() {
+    if (typeof Villager === 'undefined') return;
+    this.villagers = [];
+    const count = 3 + Math.floor(Math.random() * 3); // 3-5
+    for (let i = 0; i < count; i++) {
+      const x = 5 + Math.random() * (this.world.width - 10);
+      const z = 5 + Math.random() * (this.world.depth - 10);
+      const bx = Math.floor(x), bz = Math.floor(z);
+      let groundY = -1;
+      for (let y = 31; y >= 0; y--) {
+        if (this.world.getBlock(bx, y, bz) !== 0) { groundY = y + 1; break; }
+      }
+      if (groundY <= 0 || groundY >= 63) continue;
+      const villager = new Villager(this.world, [x, groundY, z]);
+      this.villagers.push(villager);
+      this.renderer.scene.add(villager.group);
     }
   }
 
@@ -399,6 +480,8 @@ class Game {
           this.audioManager.ctx.resume();
         }
         this._setupInventoryUI();
+        this._setupTaskBarToggle();
+        this._spawnVillagers();
         this.running = true;
         this.lastTime = performance.now();
         this.characterPreview.hide();
@@ -535,8 +618,13 @@ class Game {
       }
     });
 
-    // Build storage slots (36)
+    // Build storage slots (36) with section dividers
     storageGrid.innerHTML = '';
+    const dividerBlock = document.createElement('div');
+    dividerBlock.className = 'storage-section-divider';
+    dividerBlock.innerHTML = '<span>🧱 方块栏</span><span>🧶 材料栏</span>';
+    storageGrid.appendChild(dividerBlock);
+    // Insert divider after slot 12 (first block row indicator)
     for (let i = 0; i < 36; i++) {
       const slot = document.createElement('div');
       slot.className = 'inv-slot';
@@ -562,13 +650,13 @@ class Game {
     // Build page navigation
     this._pageNav = document.createElement('div');
     this._pageNav.className = 'page-nav';
-    this._pageNav.innerHTML = '<span class="page-nav-btn" data-dir="-1">‹</span><span class="page-nav-indicator">1/2</span><span class="page-nav-btn" data-dir="1">›</span>';
+    this._pageNav.innerHTML = '<span class="page-nav-btn" data-dir="-1">‹</span><span class="page-nav-indicator">1/3</span><span class="page-nav-btn" data-dir="1">›</span>';
     this._pageNav.addEventListener('click', (e) => {
       const btn = e.target.closest('.page-nav-btn');
       if (!btn) return;
       const dir = parseInt(btn.dataset.dir);
       const newPage = this.inventory.currentPage + dir;
-      if (newPage < 0 || newPage > 1) return;
+      if (newPage < 0 || newPage > 2) return;
       this.inventory.currentPage = newPage;
       this._updateInventoryUI();
     });
@@ -812,6 +900,24 @@ class Game {
   }
 
   _updateInventoryUI() {
+    // Update weapon slot
+    const weaponSlotEl = document.getElementById('weapon-slot');
+    if (weaponSlotEl) {
+      weaponSlotEl.innerHTML = '';
+      if (this.inventory.weaponSlot) {
+        weaponSlotEl.classList.add('has-item');
+        const preview = document.createElement('div');
+        preview.className = 'item-preview';
+        preview.classList.add(this._getItemClassName(this.inventory.weaponSlot.type));
+        const tier = getTierClass(this.inventory.weaponSlot.type);
+        if (tier) preview.classList.add(tier);
+        preview.textContent = EMOJI_MAP.get(this.inventory.weaponSlot.type) || '🗡️';
+        weaponSlotEl.appendChild(preview);
+      } else {
+        weaponSlotEl.classList.remove('has-item');
+      }
+    }
+
     // Update storage slots with paging
     const page = this.inventory.currentPage;
     const offset = page * 36;
@@ -824,7 +930,7 @@ class Game {
     // Update page indicator
     if (this._pageNav) {
       const indicator = this._pageNav.querySelector('.page-nav-indicator');
-      if (indicator) indicator.textContent = (page + 1) + '/2';
+      if (indicator) indicator.textContent = (page + 1) + '/3';
     }
 
     // Update armor slots in inventory
@@ -848,6 +954,9 @@ class Game {
     const typeName = this._getItemClassName(item.type);
     preview.classList.add(typeName);
     preview.textContent = EMOJI_MAP.get(item.type) || '🧱';
+    // 装备等级色
+    const tier = getTierClass(item.type);
+    if (tier) preview.classList.add(tier);
     el.appendChild(preview);
     if (item.count > 1) {
       const count = document.createElement('span');
@@ -1087,16 +1196,52 @@ class Game {
         if (this.inventory.armorSlots[slot]) {
           this.inventory.unequipArmor(slot);
         } else {
-          // Try to equip selected hotbar item
-          const selected = this.inventory.getSelectedItem();
-          if (selected && this.inventory.isArmor(selected.type)) {
-            this.inventory.equipArmor(selected.type, 1);
+          // Try to equip selected hotbar item (or cursor item)
+          if (this._cursor && this._cursor.item && this.inventory.isArmor(this._cursor.item.type)) {
+            this.inventory.equipArmor(this._cursor.item.type, 1);
+            this._cursor.item.count -= 1;
+            if (this._cursor.item.count <= 0) {
+              this._cursor.item = null;
+              this._cursor.origin = null;
+              this._destroyCursorGhost();
+            } else {
+              this._destroyCursorGhost();
+              this._createCursorGhost(this._cursor.item);
+            }
+          } else {
+            const selected = this.inventory.getSelectedItem();
+            if (selected && this.inventory.isArmor(selected.type)) {
+              this.inventory.equipArmor(selected.type, 1);
+            }
           }
         }
         this._updateArmorUI();
         this._updateInventoryUI();
       });
     });
+    // Weapon slot click: unequip weapon
+    const weaponSlotEl = document.getElementById('weapon-slot');
+    if (weaponSlotEl) {
+      weaponSlotEl.addEventListener('click', () => {
+        if (this._cursor && this._cursor.item) {
+          // Try to equip cursor weapon
+          const cat = this.inventory.getItemCategory(this._cursor.item.type);
+          if (cat === 'weapon' || cat === 'tool') {
+            this.inventory.equipWeapon(this._cursor.item.type, 1);
+            this._cursor.item.count -= 1;
+            if (this._cursor.item.count <= 0) {
+              this._cursor.item = null;
+              this._cursor.origin = null;
+              this._destroyCursorGhost();
+            }
+          }
+        } else if (this.inventory.weaponSlot) {
+          // Unequip weapon to storage
+          this.inventory.unequipWeapon();
+        }
+        this._updateInventoryUI();
+      });
+    }
   }
 
   _updateArmorUI() {
@@ -1114,6 +1259,8 @@ class Game {
         const preview = document.createElement('div');
         preview.className = 'item-preview';
         preview.classList.add(this._getItemClassName(item.type));
+        const tier = getTierClass(item.type);
+        if (tier) preview.classList.add(tier);
         el.appendChild(preview);
       } else {
         el.classList.remove('has-item');
@@ -1165,8 +1312,18 @@ class Game {
     }
   }
 
+  /** Check if item can be placed in given slot type */
+  _canPlace(itemType, slotType) {
+    // Weapons → only weaponSlot. Tools → anywhere. Armor → armorSlot only.
+    const cat = this.inventory.getItemCategory(itemType);
+    if (cat === 'weapon') return slotType === 'weaponSlot';
+    if (cat === 'armor') return slotType === 'armorSlot' || slotType === 'cursor';
+    return slotType !== 'weaponSlot'; // blocks/materials → hotbar/storage
+  }
+
   /** Cursor 主入口：处理所有格子类型的左键点击 */
   _cursorHandleSlotClick(type, index) {
+    if (type === 'storage') index += this.inventory.currentPage * 36;
     const array = type === 'storage' ? this.inventory.storage
       : type === 'hotbar' ? this.inventory.hotbar : null;
     const item = array ? array[index] : null;
@@ -1204,6 +1361,9 @@ class Game {
   }
 
   _cursorPlace(type, index) {
+    if (!this._cursor.item) return;
+    // 类型检查
+    if (!this._canPlace(this._cursor.item.type, type)) return;
     const array = type === 'storage' ? this.inventory.storage : this.inventory.hotbar;
     array[index] = this._cursor.item;
     this._cursor.item = null;
@@ -1217,6 +1377,8 @@ class Game {
     const array = type === 'storage' ? this.inventory.storage : this.inventory.hotbar;
     const target = array[index];
     if (!target || target.type !== this._cursor.item.type) return;
+    // 类型检查
+    if (!this._canPlace(this._cursor.item.type, type)) return;
 
     const space = MAX_STACK - target.count;
     if (space <= 0) {
@@ -1243,6 +1405,13 @@ class Game {
   _cursorSwap(type, index) {
     const array = type === 'storage' ? this.inventory.storage : this.inventory.hotbar;
     const temp = array[index];
+    // 类型检查：cursor 物品不能放入
+    if (this._cursor.item && !this._canPlace(this._cursor.item.type, type)) return;
+    // 目标物品（在slot中的）不能放入 cursor 来源位置
+    if (temp && this._cursor.origin) {
+      const originType = this._cursor.origin.type;
+      if (originType !== 'cursor' && !this._canPlace(temp.type, originType)) return;
+    }
     array[index] = this._cursor.item;
     this._cursor.item = temp;
     this._cursor.origin = { type, index };
@@ -1287,6 +1456,7 @@ class Game {
   }
 
   _cursorHandleRightClick(type, index) {
+    if (type === 'storage') index += this.inventory.currentPage * 36;
     const array = type === 'storage' ? this.inventory.storage : this.inventory.hotbar;
     const item = array[index];
 
@@ -1327,6 +1497,7 @@ class Game {
   }
 
   _cursorShiftMove(type, index) {
+    if (type === 'storage') index += this.inventory.currentPage * 36;
     const array = type === 'storage' ? this.inventory.storage
       : type === 'hotbar' ? this.inventory.hotbar : null;
     if (!array) return;
@@ -1335,6 +1506,9 @@ class Game {
 
     // 确定目标区域
     const isStorage = type === 'storage';
+    const targetType = isStorage ? 'hotbar' : 'storage';
+    // 类型检查
+    if (!this._canPlace(item.type, targetType)) return;
     const targetArray = isStorage ? this.inventory.hotbar : this.inventory.storage;
     const MAX_STACK = 64;
 
@@ -1438,8 +1612,12 @@ class Game {
     const currentItem = srcArray[sourceIndex];
     if (!currentItem || currentItem.type !== item.type || currentItem.count !== item.count) return;
 
+    // 类型检查
+    if (!this._canPlace(currentItem.type, dstType)) return;
+
     // Drag = 拾取+放置 = 交换
     const tmp = dstArray[dstIndex];
+    if (tmp && !this._canPlace(tmp.type, sourceType)) return;
     dstArray[dstIndex] = currentItem;
     srcArray[sourceIndex] = tmp;
 
@@ -1611,10 +1789,33 @@ class Game {
       this.steveModel.switchWeapon(null);
       return;
     }
+    // If weaponSlot has a weapon, use it as current
+    if (this.inventory.weaponSlot && !this.currentWeaponId) {
+      this.currentWeaponId = this.inventory.weaponSlot.type;
+    }
     const currentIdx = this.currentWeaponId ? weaponIds.indexOf(this.currentWeaponId) : -1;
     const nextIdx = (currentIdx + 1) % weaponIds.length;
     this.currentWeaponId = weaponIds[nextIdx];
+    // Auto-equip to weaponSlot
+    if (this.inventory.weaponSlot && this.inventory.weaponSlot.type !== this.currentWeaponId) {
+      // Find weapon in storage and equip it
+      const found = this._findWeaponInInventory(this.currentWeaponId);
+      if (found) {
+        this.inventory.equipWeapon(this.currentWeaponId, 1);
+      }
+    } else if (!this.inventory.weaponSlot) {
+      this.inventory.equipWeapon(this.currentWeaponId, 1);
+    }
     this.steveModel.switchWeapon(this.currentWeaponId);
+  }
+
+  _findWeaponInInventory(weaponType) {
+    for (const slots of [this.inventory.storage, this.inventory.hotbar]) {
+      for (let i = 0; i < slots.length; i++) {
+        if (slots[i] && slots[i].type === weaponType) return slots[i];
+      }
+    }
+    return null;
   }
 
   gameLoop(time) {
@@ -1846,6 +2047,13 @@ class Game {
     }
     this.diagnostics.endPhase();
 
+    // Update villagers
+    this.diagnostics.beginPhase('villagers');
+    for (const villager of this.villagers) {
+      villager.update(dt, this.player.position);
+    }
+    this.diagnostics.endPhase();
+
     // Update hostile mobs
     this.diagnostics.beginPhase('hostiles');
     for (const mob of this.hostiles) {
@@ -1977,9 +2185,9 @@ class Game {
     // Update weather particles
     this.weatherManager.update(dt, this.player.position);
 
-    // Hostile mob spawn timer (every 8 seconds, cap 16)
+    // Hostile mob spawn timer (every 16 seconds, cap 8)
     this._hostileSpawnTimer += dt;
-    if (this._hostileSpawnTimer >= 8) {
+    if (this._hostileSpawnTimer >= 16) {
       this._hostileSpawnTimer = 0;
       this._spawnHostiles();
     }
@@ -2405,7 +2613,11 @@ class Game {
       this.saveWorld();
     }
 
-    // Update HUD
+    // Update HUD — weapon from weaponSlot
+    const equippedWeaponType = this.inventory.getEquippedWeaponType();
+    if (equippedWeaponType && !this.currentWeaponId) {
+      this.currentWeaponId = equippedWeaponType;
+    }
     const w = this.currentWeaponId ? getWeapon(this.currentWeaponId) : null;
     const weaponName = w ? `${w.name} | 攻击:${w.damage} | 速度:${w.speed}` : '';
     const levelProgress = this.currentLevel ? this.currentLevel.getTaskProgress() : [];
@@ -2425,6 +2637,34 @@ class Game {
     });
     const armorDefense = this.inventory.getArmorDefense();
     const bowChargePercent = this._bowCharging ? Math.min(this._bowChargeTime / 1.5, 1.0) : 0;
+
+    // HUD 装备等级色显示（从 weaponSlot 读取）
+    const wEl = document.getElementById('weapon-display');
+    const weaponForDisplay = equippedWeaponType || this.currentWeaponId;
+    if (wEl && weaponForDisplay) {
+      const emoji = EMOJI_MAP.get(weaponForDisplay) || '🗡️';
+      const tier = getTierClass(weaponForDisplay);
+      wEl.innerHTML = `<span class="hud-equip-icon${tier ? ' ' + tier : ''}">${emoji}</span> ${weaponName}`;
+    } else if (wEl) {
+      wEl.textContent = '';
+    }
+    const aEl = document.getElementById('armor-display');
+    if (aEl) {
+      const armorItems = ['head', 'chest', 'legs', 'feet'];
+      let armorHtml = '';
+      for (const slot of armorItems) {
+        const item = this.inventory.armorSlots[slot];
+        if (item) {
+          const emoji = EMOJI_MAP.get(item.type) || '🛡️';
+          const tier = getTierClass(item.type);
+          armorHtml += `<span class="hud-equip-icon${tier ? ' ' + tier : ''}">${emoji}</span>`;
+        }
+      }
+      aEl.innerHTML = armorDefense > 0
+        ? `🛡${armorDefense} ${armorHtml}`
+        : '';
+    }
+
     this.hud.update(
       this.input.selectedBlock,
       this.player.position,
@@ -3194,7 +3434,7 @@ class Game {
   _spawnHostiles() {
     if (this.uiState !== 'gameplay') return;
     const alive = this.hostiles.filter(m => !m.dead).length;
-    if (alive >= 16) return;
+    if (alive >= 8) return;
 
     // Biome-based spawn weights
     const biomeType = this.currentLevel && this.currentLevel.id;
@@ -3212,8 +3452,8 @@ class Game {
     const isDay = this.timeOfDay > 0.25 && this.timeOfDay < 0.75;
     if (isDay && Math.random() > 0.5) return;
 
-    // Spawn 2-4 mobs
-    const count = 2 + Math.floor(Math.random() * 3);
+    // Spawn 1-2 mobs
+    const count = 1 + Math.floor(Math.random() * 2);
     for (let i = 0; i < count; i++) {
       let attempts = 0;
       while (attempts < 20) {
