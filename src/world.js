@@ -48,15 +48,20 @@ export const BLOCK = {
   GRANITE: 25,
   DIORITE: 26,
   ANDESITE: 27,
+  // Mesa/terracotta
+  RED_SAND: 28,
+  TERRACOTTA: 29,
 };
 
-export const MAX_BLOCK_TYPE = 27;
+export const MAX_BLOCK_TYPE = 29;
 
 export const BLOCK_NAMES = [
   'Air', '草方块', '泥土', '石头', '木头', '砖块', '水', '树叶', '花',
   '沼泽泥', '黏土', '荷叶', '芦苇',
   '煤矿', '铁矿', '金矿', '钻石矿', '红石矿', '青金石矿',
-  '沙子', '砂砾', '雪', '仙人掌', '宝箱', '火把'
+  '沙子', '砂砾', '雪', '仙人掌', '宝箱', '火把',
+  '花岗岩', '闪长岩', '安山岩',
+  '红沙', '陶瓦',
 ];
 
 export const BLOCK_COLORS = {
@@ -87,6 +92,8 @@ export const BLOCK_COLORS = {
   [BLOCK.GRANITE]: 0xCC8866,
   [BLOCK.DIORITE]: 0xDDDDDD,
   [BLOCK.ANDESITE]: 0x888888,
+  [BLOCK.RED_SAND]: 0xD27D56,
+  [BLOCK.TERRACOTTA]: 0xBF6B3A,
 };
 
 export const BLOCK_OPACITY = {
@@ -128,10 +135,12 @@ export const ITEM = {
   GUNPOWDER: 146,  // 火药 (Creeper 掉落)
   ENDER_PEARL: 147,// 末影珍珠 (Enderman 掉落)
   COBBLESTONE: 148,// 圆石 (石头掉落)
-  // New block items (block types 25-27)
+  // New block items (block types 25-29)
   GRANITE_ITEM: 25,
   DIORITE_ITEM: 26,
   ANDESITE_ITEM: 27,
+  RED_SAND_ITEM: 28,
+  TERRACOTTA_ITEM: 29,
 };
 
 export const ITEM_NAMES = {
@@ -160,6 +169,8 @@ export const ITEM_NAMES = {
   [ITEM.GRANITE_ITEM]: '花岗岩',
   [ITEM.DIORITE_ITEM]: '闪长岩',
   [ITEM.ANDESITE_ITEM]: '安山岩',
+  [ITEM.RED_SAND_ITEM]: '红沙',
+  [ITEM.TERRACOTTA_ITEM]: '陶瓦',
   [ITEM.CHEST]: '宝箱', [ITEM.GUNPOWDER]: '火药', [ITEM.ENDER_PEARL]: '末影珍珠',
 };
 
@@ -189,6 +200,8 @@ export const ITEM_COLORS = {
   [ITEM.GRANITE_ITEM]: 0xCC8866,
   [ITEM.DIORITE_ITEM]: 0xDDDDDD,
   [ITEM.ANDESITE_ITEM]: 0x888888,
+  [ITEM.RED_SAND_ITEM]: 0xD27D56,
+  [ITEM.TERRACOTTA_ITEM]: 0xBF6B3A,
   [ITEM.CHEST]: 0x8D6E63, [ITEM.GUNPOWDER]: 0x4A4A4A, [ITEM.ENDER_PEARL]: 0x9C27B0,
 };
 
@@ -221,6 +234,8 @@ export const BLOCK_HARDNESS = {
   [BLOCK.GRANITE]: 1.5,
   [BLOCK.DIORITE]: 1.5,
   [BLOCK.ANDESITE]: 1.5,
+  [BLOCK.RED_SAND]: 0.5,
+  [BLOCK.TERRACOTTA]: 1.2,
 };
 
 export function isSolid(block) {
@@ -281,8 +296,10 @@ export class Chunk {
 // ChunkManager — loads/unloads chunks around player position
 // ===================================================================
 export class ChunkManager {
-  constructor() {
+  constructor(worldWidth, worldDepth) {
     this.chunks = new Map(); // "cx,cz" -> Chunk
+    this._ww = worldWidth || WORLD_WIDTH;
+    this._wd = worldDepth || WORLD_DEPTH;
   }
 
   _key(cx, cz) { return `${cx},${cz}`; }
@@ -305,7 +322,7 @@ export class ChunkManager {
 
   getBlock(wx, wy, wz) {
     if (wy < 0 || wy >= WORLD_HEIGHT) return 0;
-    if (wx < 0 || wx >= WORLD_WIDTH || wz < 0 || wz >= WORLD_DEPTH) return 0;
+    if (wx < 0 || wx >= this._ww || wz < 0 || wz >= this._wd) return 0;
     const cx = Math.floor(wx / CHUNK_SIZE);
     const cz = Math.floor(wz / CHUNK_SIZE);
     const chunk = this.getChunk(cx, cz);
@@ -315,7 +332,7 @@ export class ChunkManager {
 
   setBlock(wx, wy, wz, type) {
     if (wy < 0 || wy >= WORLD_HEIGHT) return;
-    if (wx < 0 || wx >= WORLD_WIDTH || wz < 0 || wz >= WORLD_DEPTH) return;
+    if (wx < 0 || wx >= this._ww || wz < 0 || wz >= this._wd) return;
     const cx = Math.floor(wx / CHUNK_SIZE);
     const cz = Math.floor(wz / CHUNK_SIZE);
     const chunk = this.getOrCreateChunk(cx, cz);
@@ -336,8 +353,8 @@ export class ChunkManager {
         const cx = centerCX + dx;
         const cz = centerCZ + dz;
         // Skip chunks that are entirely outside the world
-        if (cx < 0 || cx >= Math.ceil(WORLD_WIDTH / CHUNK_SIZE)) continue;
-        if (cz < 0 || cz >= Math.ceil(WORLD_DEPTH / CHUNK_SIZE)) continue;
+        if (cx < 0 || cx >= Math.ceil(this._ww / CHUNK_SIZE)) continue;
+        if (cz < 0 || cz >= Math.ceil(this._wd / CHUNK_SIZE)) continue;
         const key = this._key(cx, cz);
         toKeep.add(key);
         if (!this.chunks.has(key)) {
@@ -407,10 +424,10 @@ export class World {
     this.chestData = new Map();
 
     if (this.useChunks) {
-      this._ww = WORLD_WIDTH;
+      this._ww = options.worldWidth || WORLD_WIDTH;
       this._wh = WORLD_HEIGHT;
-      this._wd = WORLD_DEPTH;
-      this.chunkManager = new ChunkManager();
+      this._wd = options.worldDepth || WORLD_DEPTH;
+      this.chunkManager = new ChunkManager(this._ww, this._wd);
       this.loadRadius = options.loadRadius || 5;
       this._genConfig = { biomeType: '', options: {} };
     } else {
@@ -540,15 +557,22 @@ export class World {
       options = {};
     }
 
+    // Apply optional world dimensions from config
+    if (options.worldWidth !== undefined) this._ww = options.worldWidth;
+    if (options.worldDepth !== undefined) this._wd = options.worldDepth;
+
     if (this.useChunks) {
       this._genConfig = { biomeType, options };
-      this.chunkManager = new ChunkManager();
+      // Scale load radius for smaller worlds
+      const chunkCount = Math.ceil(this._ww / CHUNK_SIZE);
+      const effectiveRadius = Math.min(this.loadRadius, Math.ceil(chunkCount / 2));
+      this.chunkManager = new ChunkManager(this._ww, this._wd);
 
       // Generate initial chunks around center spawn
-      const spawnCX = Math.floor((WORLD_WIDTH / 2) / CHUNK_SIZE);
-      const spawnCZ = Math.floor((WORLD_DEPTH / 2) / CHUNK_SIZE);
-      for (let dx = -this.loadRadius; dx <= this.loadRadius; dx++) {
-        for (let dz = -this.loadRadius; dz <= this.loadRadius; dz++) {
+      const spawnCX = Math.floor((this._ww / 2) / CHUNK_SIZE);
+      const spawnCZ = Math.floor((this._wd / 2) / CHUNK_SIZE);
+      for (let dx = -effectiveRadius; dx <= effectiveRadius; dx++) {
+        for (let dz = -effectiveRadius; dz <= effectiveRadius; dz++) {
           this._generateChunkTerrain(spawnCX + dx, spawnCZ + dz);
         }
       }
@@ -575,6 +599,7 @@ export class World {
     const isDesertWorld = biomeType === 'desert';
     const isTundraWorld = biomeType === 'tundra';
     const isCaveWorld = biomeType === 'cave';
+    const isMesaWorld = biomeType === 'mesa';
 
     // Phase 1: Generate heightmap with multi-layer noise
     const heightMap = new Float32Array(w * d);
@@ -597,6 +622,9 @@ export class World {
         } else if (isDesertWorld) {
           height = Math.floor(22 + simplex2D(x * 0.01, z * 0.01) * 2);
           biomeMap[hmIdx(x, z)] = 4;
+        } else if (isMesaWorld) {
+          height = Math.floor(24 + simplex2D(x * 0.015, z * 0.015) * 2.5);
+          biomeMap[hmIdx(x, z)] = 9;
         } else if (isTundraWorld) {
           biomeMap[hmIdx(x, z)] = 6;
         } else {
@@ -637,7 +665,7 @@ export class World {
     }
 
     // Phase 2.5: contiguous swamp check
-    if (!isSwampWorld && !isDesertWorld && !isTundraWorld && !isCaveWorld) {
+    if (!isSwampWorld && !isDesertWorld && !isTundraWorld && !isCaveWorld && !isMesaWorld) {
       for (let x = 2; x < w - 2; x++) {
         for (let z = 2; z < d - 2; z++) {
           const idx = hmIdx(x, z);
@@ -698,6 +726,7 @@ export class World {
         const isDesert = biome === 4;
         const isCave = biome === 5;
         const isTundra = biome === 6;
+        const isMesa = biome === 9;
 
         if (isSwamp) {
           for (let y = 0; y <= ht; y++) {
@@ -718,7 +747,8 @@ export class World {
           }
         } else {
           let surfaceBlock = BLOCK.GRASS;
-          if (isDesert) surfaceBlock = BLOCK.SAND;
+          if (isMesa) surfaceBlock = BLOCK.TERRACOTTA;
+          else if (isDesert) surfaceBlock = BLOCK.SAND;
           else if (isTundra) surfaceBlock = BLOCK.SNOW;
           else if (isCave) surfaceBlock = BLOCK.STONE;
           else if (isRiver) surfaceBlock = BLOCK.SAND;
@@ -729,7 +759,7 @@ export class World {
             } else if (y < ht - 3) {
               this.blocks[this.index(x, y, z)] = BLOCK.STONE;
             } else if (y < ht) {
-              this.blocks[this.index(x, y, z)] = isDesert ? BLOCK.SAND : (isTundra ? (y < ht - 1 ? BLOCK.DIRT : BLOCK.SNOW) : BLOCK.DIRT);
+              this.blocks[this.index(x, y, z)] = isMesa ? BLOCK.RED_SAND : (isDesert ? BLOCK.SAND : (isTundra ? (y < ht - 1 ? BLOCK.DIRT : BLOCK.SNOW) : BLOCK.DIRT));
             } else {
               this.blocks[this.index(x, y, z)] = surfaceBlock;
             }
@@ -953,6 +983,9 @@ export class World {
 
   // Per-chunk terrain generation — replicates the original generate() logic for a single chunk
   _generateChunkTerrain(cx, cz) {
+    // Skip chunks entirely outside the world bounds
+    if (cx < 0 || cx * CHUNK_SIZE >= this._ww) return;
+    if (cz < 0 || cz * CHUNK_SIZE >= this._wd) return;
     const worldXO = cx * CHUNK_SIZE;
     const worldZO = cz * CHUNK_SIZE;
 
@@ -967,6 +1000,7 @@ export class World {
     const isCaveWorld = biomeType === 'cave';
     const isJungleWorld = biomeType === 'jungle';
     const isCherryWorld = biomeType === 'cherry';
+    const isMesaWorld = biomeType === 'mesa';
 
     // Heightmap for chunk columns + 2-cell border (for biome slope computation)
     const PAD = 2;
@@ -991,6 +1025,10 @@ export class World {
           biomeMap[hmIdx(lx, lz)] = 5;
         } else if (isSwampWorld) {
           biomeMap[hmIdx(lx, lz)] = 3;
+        } else if (isMesaWorld) {
+          // Mesa: flat terrain like desert but slightly higher
+          height = Math.floor(24 + simplex2D(wx * 0.015, wz * 0.015) * 2.5);
+          biomeMap[hmIdx(lx, lz)] = 9;
         } else if (isDesertWorld) {
           height = Math.floor(22 + simplex2D(wx * 0.01, wz * 0.01) * 2);
           biomeMap[hmIdx(lx, lz)] = 4;
@@ -1014,7 +1052,7 @@ export class World {
     }
 
     // Phase 2: Slope/biome classification (interior only)
-    if (!isSwampWorld && !isDesertWorld && !isTundraWorld && !isCaveWorld) {
+    if (!isSwampWorld && !isDesertWorld && !isTundraWorld && !isCaveWorld && !isMesaWorld) {
       for (let lx = 0; lx < CHUNK_SIZE; lx++) {
         for (let lz = 0; lz < CHUNK_SIZE; lz++) {
           const idx = hmIdx(lx, lz);
@@ -1037,7 +1075,7 @@ export class World {
     }
 
     // Phase 2.5: contiguous swamp check (interior only)
-    if (!isSwampWorld && !isDesertWorld && !isTundraWorld && !isCaveWorld) {
+    if (!isSwampWorld && !isDesertWorld && !isTundraWorld && !isCaveWorld && !isMesaWorld) {
       for (let lx = 2; lx < CHUNK_SIZE - 2; lx++) {
         for (let lz = 2; lz < CHUNK_SIZE - 2; lz++) {
           const idx = hmIdx(lx, lz);
@@ -1101,6 +1139,7 @@ export class World {
         const isDesert = biome === 4;
         const isCave = biome === 5;
         const isTundra = biome === 6;
+        const isMesa = biome === 9;
 
         if (isSwamp) {
           for (let y = 0; y <= ht; y++) {
@@ -1121,7 +1160,8 @@ export class World {
           }
         } else {
           let surfaceBlock = BLOCK.GRASS;
-          if (isDesert) surfaceBlock = BLOCK.SAND;
+          if (isMesa) surfaceBlock = BLOCK.TERRACOTTA;
+          else if (isDesert) surfaceBlock = BLOCK.SAND;
           else if (isTundra) surfaceBlock = BLOCK.SNOW;
           else if (isCave) surfaceBlock = BLOCK.STONE;
           else if (isRiver) surfaceBlock = BLOCK.SAND;
@@ -1132,7 +1172,7 @@ export class World {
             } else if (y < ht - 3) {
               cm.setBlock(wx, y, wz, BLOCK.STONE);
             } else if (y < ht) {
-              cm.setBlock(wx, y, wz, isDesert ? BLOCK.SAND : (isTundra ? (y < ht - 1 ? BLOCK.DIRT : BLOCK.SNOW) : BLOCK.DIRT));
+              cm.setBlock(wx, y, wz, isMesa ? BLOCK.RED_SAND : (isDesert ? BLOCK.SAND : (isTundra ? (y < ht - 1 ? BLOCK.DIRT : BLOCK.SNOW) : BLOCK.DIRT)));
             } else {
               cm.setBlock(wx, y, wz, surfaceBlock);
             }
@@ -1247,7 +1287,7 @@ export class World {
           for (let dz = -1; dz <= 1; dz++) {
             for (let ly = 0; ly <= 2; ly++) {
               const lx2 = wx + dx, lz2 = wz + dz, lyPos = leafBase + ly;
-              if (lx2 >= 0 && lx2 < WORLD_WIDTH && lz2 >= 0 && lz2 < WORLD_DEPTH && lyPos < WORLD_HEIGHT) {
+              if (lx2 >= 0 && lx2 < this._ww && lz2 >= 0 && lz2 < this._wd && lyPos < WORLD_HEIGHT) {
                 if (cm.getBlock(lx2, lyPos, lz2) === BLOCK.AIR) {
                   cm.setBlock(lx2, lyPos, lz2, BLOCK.LEAVES);
                 }
@@ -1278,7 +1318,7 @@ export class World {
           for (let dz = -1; dz <= 1; dz++) {
             for (let ly = 0; ly <= 2; ly++) {
               const lx2 = wx + dx, lz2 = wz + dz, lyPos = leafBase + ly;
-              if (lx2 >= 0 && lx2 < WORLD_WIDTH && lz2 >= 0 && lz2 < WORLD_DEPTH && lyPos < WORLD_HEIGHT) {
+              if (lx2 >= 0 && lx2 < this._ww && lz2 >= 0 && lz2 < this._wd && lyPos < WORLD_HEIGHT) {
                 if (cm.getBlock(lx2, lyPos, lz2) === BLOCK.AIR) {
                   cm.setBlock(lx2, lyPos, lz2, BLOCK.LEAVES);
                 }
@@ -1329,7 +1369,7 @@ export class World {
               for (let dz = -radius; dz <= radius; dz++) {
                 if (ht + ly < WORLD_HEIGHT && ly > 1) {
                   const lx2 = wx + dx, lz2 = wz + dz;
-                  if (lx2 >= 0 && lx2 < WORLD_WIDTH && lz2 >= 0 && lz2 < WORLD_DEPTH) {
+                  if (lx2 >= 0 && lx2 < this._ww && lz2 >= 0 && lz2 < this._wd) {
                     if (cm.getBlock(lx2, ht + ly, lz2) === BLOCK.AIR) {
                       cm.setBlock(lx2, ht + ly, lz2, BLOCK.LEAVES);
                     }
@@ -1382,7 +1422,7 @@ export class World {
               for (let ly = 0; ly <= 3; ly++) {
                 const lx2 = wx + dx, lz2 = wz + dz, lyPos = leafBase + ly;
                 if (Math.abs(dx) === 2 && Math.abs(dz) === 2 && Math.random() > 0.5) continue;
-                if (lx2 >= 0 && lx2 < WORLD_WIDTH && lz2 >= 0 && lz2 < WORLD_DEPTH && lyPos < WORLD_HEIGHT) {
+                if (lx2 >= 0 && lx2 < this._ww && lz2 >= 0 && lz2 < this._wd && lyPos < WORLD_HEIGHT) {
                   if (cm.getBlock(lx2, lyPos, lz2) === BLOCK.AIR) {
                     cm.setBlock(lx2, lyPos, lz2, BLOCK.LEAVES);
                   }
@@ -1415,7 +1455,7 @@ export class World {
             for (let dz = -1; dz <= 1; dz++) {
               for (let ly = 0; ly <= 2; ly++) {
                 const lx2 = wx + dx, lz2 = wz + dz, lyPos = leafBase + ly;
-                if (lx2 >= 0 && lx2 < WORLD_WIDTH && lz2 >= 0 && lz2 < WORLD_DEPTH && lyPos < WORLD_HEIGHT) {
+                if (lx2 >= 0 && lx2 < this._ww && lz2 >= 0 && lz2 < this._wd && lyPos < WORLD_HEIGHT) {
                   if (cm.getBlock(lx2, lyPos, lz2) === BLOCK.AIR) {
                     cm.setBlock(lx2, lyPos, lz2, BLOCK.LEAVES);
                   }
@@ -1477,6 +1517,7 @@ export class World {
     else if (biomeType === 'tundra') { fillBlock = BLOCK.STONE; topBlock = BLOCK.SNOW; }
     else if (biomeType === 'swamp') { fillBlock = BLOCK.MUD; topBlock = BLOCK.MUD; }
     else if (biomeType === 'cave') { fillBlock = BLOCK.STONE; topBlock = BLOCK.STONE; }
+    else if (biomeType === 'mesa') { fillBlock = BLOCK.RED_SAND; topBlock = BLOCK.TERRACOTTA; }
 
     // Phase 1: find ground surface in each column (ignore vegetation/wood above ground)
     const surfaceHeights = Array(sx * sz).fill(-1);
@@ -1491,7 +1532,8 @@ export class World {
           if (b === BLOCK.GRASS || b === BLOCK.DIRT || b === BLOCK.STONE ||
               b === BLOCK.SAND || b === BLOCK.SNOW || b === BLOCK.MUD ||
               b === BLOCK.GRAVEL || b === BLOCK.GRANITE || b === BLOCK.DIORITE ||
-              b === BLOCK.ANDESITE || b === BLOCK.CLAY) {
+              b === BLOCK.ANDESITE || b === BLOCK.CLAY ||
+              b === BLOCK.TERRACOTTA || b === BLOCK.RED_SAND) {
             surf = y;
             break;
           }
@@ -1590,8 +1632,8 @@ export class World {
 
       if (this.useChunks) {
         // Restrict to initial spawn chunk area
-        const cxc = Math.floor((WORLD_WIDTH / 2) / CHUNK_SIZE);
-        const czc = Math.floor((WORLD_DEPTH / 2) / CHUNK_SIZE);
+        const cxc = Math.floor((this._ww / 2) / CHUNK_SIZE);
+        const czc = Math.floor((this._wd / 2) / CHUNK_SIZE);
         const radius = this.loadRadius || 5;
         minWx = Math.max(minWx, (cxc - radius) * CHUNK_SIZE + margin);
         maxWx = Math.min(maxWx, (cxc + radius + 1) * CHUNK_SIZE - margin);
@@ -1611,7 +1653,7 @@ export class World {
           const wx = minWx + rx;
           const wz = minWz + rz;
 
-          const surfaceY = this._findSurface(wx, wz, 64);
+          const surfaceY = this._findSurface(wx, wz, this._wh);
           if (surfaceY < 1) continue;
           const surfBlock = this.getBlock(wx, surfaceY, wz);
           if (surfBlock !== BLOCK.GRASS && surfBlock !== BLOCK.DIRT &&
@@ -1684,8 +1726,8 @@ export class World {
 
   findSpawnPosition() {
     if (this.useChunks) {
-      const centerX = Math.floor(WORLD_WIDTH / 2);
-      const centerZ = Math.floor(WORLD_DEPTH / 2);
+      const centerX = Math.floor(this._ww / 2);
+      const centerZ = Math.floor(this._wd / 2);
       for (let radius = 0; radius <= 15; radius++) {
         for (let dx = -radius; dx <= radius; dx++) {
           for (let dz = -radius; dz <= radius; dz++) {
@@ -1698,7 +1740,7 @@ export class World {
             }
             if (surfaceY < 1) continue;
             const surfBlock = this.getBlock(bx, surfaceY, bz);
-            if (surfBlock !== BLOCK.GRASS && surfBlock !== BLOCK.MUD && surfBlock !== BLOCK.SAND && surfBlock !== BLOCK.SNOW && surfBlock !== BLOCK.STONE) continue;
+            if (surfBlock !== BLOCK.GRASS && surfBlock !== BLOCK.MUD && surfBlock !== BLOCK.SAND && surfBlock !== BLOCK.SNOW && surfBlock !== BLOCK.STONE && surfBlock !== BLOCK.TERRACOTTA && surfBlock !== BLOCK.RED_SAND) continue;
             let flat = true;
             for (let sx = -1; sx <= 1 && flat; sx++) {
               for (let sz = -1; sz <= 1 && flat; sz++) {
@@ -1958,7 +2000,7 @@ export class BSPDungeonGenerator {
           const onFront = z === room.z - 1;
           const onBack = z === room.z + room.d;
           if (!(onLeft || onRight || onFront || onBack)) continue;
-          if (x < 0 || x >= WORLD_WIDTH || z < 0 || z >= WORLD_DEPTH) continue;
+          if (x < 0 || x >= this._ww || z < 0 || z >= this._wd) continue;
           for (let y = FLOOR_Y + 1; y < FLOOR_Y + ROOM_HEIGHT; y++) {
             this.cm.setBlock(x, y, z, BLOCK.STONE);
           }
@@ -1969,7 +2011,7 @@ export class BSPDungeonGenerator {
       for (let x = room.x; x < room.x + room.w; x++) {
         for (let y = FLOOR_Y + 1; y < FLOOR_Y + ROOM_HEIGHT; y++) {
           for (let z = room.z; z < room.z + room.d; z++) {
-            if (x >= 0 && x < WORLD_WIDTH && z >= 0 && z < WORLD_DEPTH) {
+            if (x >= 0 && x < this._ww && z >= 0 && z < this._wd) {
               this.cm.setBlock(x, y, z, BLOCK.AIR);
             }
           }

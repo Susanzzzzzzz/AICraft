@@ -16,16 +16,18 @@ export const LEVELS = [
     rewards: [],
     unlockSkills: ['mc_mine_001'],
     terrains: [{ id: 'default', name: '村民村', seedOffset: 999, biomeType: 'plains', waterLevel: 28,
+      worldWidth: 48, worldDepth: 48,
+      atmosphere: { lightMultiplier: 1.1, fogNear: 10, fogFar: 35 },
       prefabs: [
-        { file: 'cabin', minCount: 4, maxCount: 6 },
-        { file: 'watchtower', minCount: 1, maxCount: 2 },
-        { file: 'well', minCount: 1, maxCount: 2 },
+        { file: 'cabin', minCount: 2, maxCount: 3 },
+        { file: 'watchtower', minCount: 1, maxCount: 1 },
+        { file: 'well', minCount: 1, maxCount: 1 },
         { file: 'fountain', minCount: 1, maxCount: 1 },
         { file: 'sakura_pavilion', minCount: 1, maxCount: 1 },
-        { file: 'lamp_post', minCount: 4, maxCount: 8 },
-        { file: 'tent', minCount: 2, maxCount: 4 },
-        { file: 'bush', minCount: 2, maxCount: 4 },
-        { file: 'rocks', minCount: 0, maxCount: 2 },
+        { file: 'lamp_post', minCount: 2, maxCount: 4 },
+        { file: 'tent', minCount: 1, maxCount: 2 },
+        { file: 'bush', minCount: 2, maxCount: 3 },
+        { file: 'rocks', minCount: 0, maxCount: 1 },
       ]
     }],
   }),
@@ -68,6 +70,7 @@ export const LEVELS = [
     rewards: [],
     unlockSkills: ['mc_fight_001'],
     terrains: [{ id: 'cave', name: '地下洞穴', seedOffset: 0, biomeType: 'cave', waterLevel: 20,
+      atmosphere: { fogMode: 'exp', fogColor: '#1a1a2e', fogDensity: 0.05, lightMultiplier: 0.6 },
       prefabs: [
         { file: 'mine_entrance', minCount: 1, maxCount: 3 },
         { file: 'mushroom', minCount: 2, maxCount: 5 },
@@ -93,6 +96,7 @@ export const LEVELS = [
     rewards: [],
     unlockSkills: ['mc_build_001'],
     terrains: [{ id: 'desert', name: '沙漠', seedOffset: 0, biomeType: 'desert', waterLevel: 24,
+      atmosphere: { fogColor: '#F5DEB3', fogNear: 80, fogFar: 200, lightMultiplier: 1.1 },
       prefabs: [
         { file: 'pyramid', minCount: 1, maxCount: 2 },
         { file: 'cactus_cluster', minCount: 2, maxCount: 5 },
@@ -118,6 +122,7 @@ export const LEVELS = [
     rewards: [],
     unlockSkills: ['mc_explore_001'],
     terrains: [{ id: 'tundra', name: '冰原', seedOffset: 0, biomeType: 'tundra', waterLevel: 28,
+      atmosphere: { weather: 'snow', fogColor: '#C8D8E8', fogNear: 40, fogFar: 120 },
       prefabs: [
         { file: 'igloo', minCount: 0, maxCount: 2, probability: 0.5 },
         { file: 'tent', minCount: 0, maxCount: 2, probability: 0.5 },
@@ -132,7 +137,7 @@ export const LEVELS = [
   new MCLevel({
     id: 'level_005',
     name: '建造天地',
-    description: '发挥创意，大量收集建筑材料',
+    description: '在红石荒漠上发挥创意，大量收集建筑材料',
     tasks: [
       { id: 't1', type: 'collect', target: ITEM.BRICK, count: 32, current: 0, description: '收集 32 个砖块' },
       { id: 't2', type: 'collect', target: ITEM.PLANK, count: 32, current: 0, description: '合成 32 个木板' },
@@ -141,15 +146,15 @@ export const LEVELS = [
     ],
     rewards: [],
     unlockSkills: ['mc_fight_002'],
-    terrains: [{ id: 'default', name: '平原', seedOffset: 0, biomeType: 'plains',
+    terrains: [{ id: 'default', name: '红石荒漠', seedOffset: 0, biomeType: 'mesa', waterLevel: 26,
+      atmosphere: { fogColor: '#E8D5A3', lightMultiplier: 1.2 },
       prefabs: [
         { file: 'cabin', minCount: 1, maxCount: 3 },
         { file: 'watchtower', minCount: 0, maxCount: 2 },
         { file: 'well', minCount: 1, maxCount: 2 },
         { file: 'fountain', minCount: 0, maxCount: 2, probability: 0.6 },
         { file: 'lamp_post', minCount: 2, maxCount: 5 },
-        { file: 'bush', minCount: 3, maxCount: 5 },
-        { file: 'rocks', minCount: 1, maxCount: 3 },
+        { file: 'rocks', minCount: 2, maxCount: 5 },
       ]
     }],
   }),
@@ -168,6 +173,7 @@ export const LEVELS = [
     unlockSkills: ['mc_explore_002'],
     terrains: [
       { id: 'default', name: '迷雾沼泽',     seedOffset: 0,   biomeType: 'swamp', waterLevel: 30,
+        atmosphere: { weather: 'rain', fogMode: 'exp', fogColor: '#88AACC', fogDensity: 0.03 },
         prefabs: [
           { file: 'swamp_hut', minCount: 0, maxCount: 2, probability: 0.6 },
           { file: 'dead_tree', minCount: 3, maxCount: 6 },
@@ -178,9 +184,12 @@ export const LEVELS = [
           { file: 'rocks', minCount: 0, maxCount: 2 },
         ]
       },
-      { id: 'reed',    name: '芦苇沼泽',     seedOffset: 100, biomeType: 'swamp', waterLevel: 28 },
-      { id: 'misty',   name: '迷雾深沼',     seedOffset: 200, biomeType: 'swamp', waterLevel: 32 },
-      { id: 'hut',     name: '沼泽小屋周边', seedOffset: 300, biomeType: 'swamp', waterLevel: 26 },
+      { id: 'reed',    name: '芦苇沼泽',     seedOffset: 100, biomeType: 'swamp', waterLevel: 28,
+        atmosphere: { weather: 'rain', fogMode: 'exp', fogColor: '#88AACC', fogDensity: 0.03 } },
+      { id: 'misty',   name: '迷雾深沼',     seedOffset: 200, biomeType: 'swamp', waterLevel: 32,
+        atmosphere: { weather: 'rain', fogMode: 'exp', fogColor: '#667788', fogDensity: 0.04 } },
+      { id: 'hut',     name: '沼泽小屋周边', seedOffset: 300, biomeType: 'swamp', waterLevel: 26,
+        atmosphere: { weather: 'rain', fogMode: 'exp', fogColor: '#88AACC', fogDensity: 0.03 } },
     ],
   }),
 
@@ -198,6 +207,7 @@ export const LEVELS = [
     rewards: [],
     unlockSkills: [],
     terrains: [{ id: 'jungle', name: '丛林', seedOffset: 0, biomeType: 'jungle', waterLevel: 28,
+      atmosphere: { fogColor: '#2D5A27', fogMode: 'exp', fogDensity: 0.02 },
       prefabs: [
         { file: 'cabin', minCount: 0, maxCount: 2, probability: 0.5 },
         { file: 'tent', minCount: 0, maxCount: 2, probability: 0.6 },
@@ -223,6 +233,7 @@ export const LEVELS = [
     rewards: [],
     unlockSkills: [],
     terrains: [{ id: 'cherry', name: '樱花谷', seedOffset: 0, biomeType: 'cherry', waterLevel: 28,
+      atmosphere: { fogColor: '#FFB7C5', fogMode: 'exp', fogDensity: 0.015 },
       prefabs: [
         { file: 'sakura_pavilion', minCount: 1, maxCount: 2 },
         { file: 'fountain', minCount: 0, maxCount: 2, probability: 0.6 },

@@ -2020,27 +2020,9 @@ class Game {
     }
     this.diagnostics.endPhase();
 
-    // World flags for AI and slime tracking
-    const isSwampLevel = this.currentLevel && this.currentLevel.id === 'level_006';
+    // World flags for AI tracking
     this.world._currentLevelId = this.currentLevel ? this.currentLevel.id : null;
     this.world._playerPos = [...this.player.position];
-
-    // Manage rain and swamp fog
-    if (isSwampLevel) {
-      if (!this.weatherManager.isRaining) {
-        this.weatherManager.start();
-        this.renderer.setSwampFog(true);
-      }
-      this.world._isRaining = true;
-      this.world._rainSpeedBonus = 0.1;
-    } else {
-      if (this.weatherManager.isRaining) {
-        this.weatherManager.stop();
-        this.renderer.setSwampFog(false);
-      }
-      this.world._isRaining = false;
-      this.world._rainSpeedBonus = 0;
-    }
 
     // Update slimes
     this.diagnostics.beginPhase('slimes');
@@ -2269,7 +2251,7 @@ class Game {
     this.diagnostics.endPhase(); // arrows
 
     // Slime spawn timer — every 10s in swamp, 1-2 slimes, max 8 total
-    if (isSwampLevel) {
+    if (this.world._currentLevelId === 'level_006') {
       this._slimeSpawnTimer += dt;
       if (this._slimeSpawnTimer >= 10) {
         this._slimeSpawnTimer = 0;
@@ -2907,6 +2889,10 @@ class Game {
       this.renderer.scene.remove(slime.group);
     }
     this.slimes = [];
+    for (const villager of this.villagers) {
+      this.renderer.scene.remove(villager.group);
+    }
+    this.villagers = [];
 
     // Update current level state
     this.currentLevelIndex = levelIndex;
@@ -2924,6 +2910,8 @@ class Game {
     const genConfig = { biomeType: variant.biomeType || 'plains' };
     if (variant.waterLevel !== undefined) genConfig.waterLevel = variant.waterLevel;
     if (variant.prefabs) genConfig.prefabs = variant.prefabs;
+    if (variant.worldWidth !== undefined) genConfig.worldWidth = variant.worldWidth;
+    if (variant.worldDepth !== undefined) genConfig.worldDepth = variant.worldDepth;
     this.world.generate(seed, genConfig);
 
     // Spawn animals
@@ -2957,6 +2945,9 @@ class Game {
       }
     }
 
+    // Spawn villagers
+    this._spawnVillagers();
+
     // Build meshes
     this.renderer.buildMeshes(this.world);
 
@@ -2964,6 +2955,7 @@ class Game {
     const allGroups = [this.steveModel.group];
     for (const a of this.animals) allGroups.push(a.group);
     for (const s of this.slimes) allGroups.push(s.group);
+    for (const v of this.villagers) allGroups.push(v.group);
     for (const g of allGroups) this.renderer.enableShadowsOnGroup(g);
 
     // Reset player position
@@ -2974,6 +2966,9 @@ class Game {
 
     // Reset time of day to dawn
     this.timeOfDay = 0.25;
+
+    // Apply per-level atmosphere (weather, fog, sky)
+    this._applyAtmosphere(variant.atmosphere);
 
     // Hide any open UI screens
     document.getElementById('level-select-screen').classList.add('hidden');
@@ -2994,6 +2989,33 @@ class Game {
 
   _isLevelUnlocked(index) {
     return true; // All levels are freely selectable
+  }
+
+  /** Apply per-level atmosphere config (weather, fog, sky) */
+  _applyAtmosphere(atmos) {
+    if (!atmos) {
+      // Default: clear weather
+      if (this.weatherManager.isRaining) this.weatherManager.stop();
+      this.renderer.setAtmosphere(null);
+      this.world._isRaining = false;
+      this.world._rainSpeedBonus = 0;
+      return;
+    }
+
+    // Weather
+    const weatherType = atmos.weather || 'none';
+    if (weatherType === 'none') {
+      if (this.weatherManager.isRaining) this.weatherManager.stop();
+      this.world._isRaining = false;
+      this.world._rainSpeedBonus = 0;
+    } else {
+      this.weatherManager.start(weatherType);
+      this.world._isRaining = true;
+      this.world._rainSpeedBonus = (weatherType === 'rain') ? 0.1 : 0;
+    }
+
+    // Fog/sky/lighting via renderer
+    this.renderer.setAtmosphere(atmos);
   }
 
   showLevelSelect(fromNotification = false) {
