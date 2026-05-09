@@ -34,7 +34,7 @@
 
 ### 方法二：打开网页版
 
-**[🌐 在线打开 AICraft](https://susanzzzzzzz.github.io/AICraft/dist/AICraft.html)** — 或直接用浏览器打开 `dist/AICraft.html`。
+**[🌐 在线打开 AICraft](https://susanzzzzzzz.github.io/AICraft/dist/AICraft.html)** — 浏览器直接游玩，无需安装。
 
 > 💡 **手机端推荐横屏模式 + 全屏以获得最佳体验！**
 
