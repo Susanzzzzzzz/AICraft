@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync, chmodSync, rmSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, chmodSync, rmSync, readdirSync, statSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
@@ -152,6 +152,20 @@ async function installAndroidSDKDirect() {
 }
 
 
+function copyRecursiveSync(src, dst) {
+  mkdirSync(dst, { recursive: true });
+  for (const entry of readdirSync(src)) {
+    const srcPath = resolve(src, entry);
+    const dstPath = resolve(dst, entry);
+    if (statSync(srcPath).isDirectory()) {
+      copyRecursiveSync(srcPath, dstPath);
+    } else {
+      writeFileSync(dstPath, readFileSync(srcPath));
+    }
+  }
+}
+
+
 export async function buildAndroid() {
   console.log('\n=== Building HTML ===');
   await build();
@@ -163,6 +177,14 @@ export async function buildAndroid() {
   if (!existsSync(htmlPath)) throw new Error('HTML not found at ' + htmlPath);
   writeFileSync(resolve(assetsDir, 'index.html'), readFileSync(htmlPath, 'utf8'));
   console.log('Copied HTML to android/app/src/main/assets/');
+
+  // Copy world data for prebuilt levels
+  const worldsSrc = resolve(DIST, 'worlds');
+  if (existsSync(worldsSrc)) {
+    const worldsDst = resolve(assetsDir, 'worlds');
+    copyRecursiveSync(worldsSrc, worldsDst);
+    console.log('Copied world data to android/app/src/main/assets/worlds/');
+  }
 
   console.log('\n=== Downloading Gradle wrapper ===');
   await ensureGradleWrapper();

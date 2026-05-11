@@ -14,7 +14,7 @@ export class Renderer {
     this.ambientLight = null;
     this.directionalLight = null;
     this.timeOfDay = 0.25;
-    this.swampFogActive = false;
+    this._fogFixedColor = false;
     this._defaultFogColor = 0x87CEEB;
     this._defaultFogNear = 60;
     this._defaultFogFar = 180;
@@ -48,6 +48,10 @@ export class Renderer {
     this._breakOverlay = null;
     this._breakProgressBar = null;
     this._breakProgressFill = null;
+
+    // Atmosphere override (set per-level)
+    this._atmosphereOverride = null;
+    this._lightMultiplier = 1.0;
   }
 
   _initBreakVisuals() {
@@ -520,7 +524,7 @@ export class Renderer {
   }
 
   setSwampFog(active) {
-    this.swampFogActive = active;
+    this._fogFixedColor = active;
     if (active) {
       this.scene.fog = new THREE.FogExp2(0x88AACC, 0.03);
     } else {
@@ -529,6 +533,39 @@ export class Renderer {
         this.scene.fog.color.copy(this.scene.background);
       }
     }
+  }
+
+  setAtmosphere(config) {
+    if (!config) {
+      // Reset to defaults
+      this._atmosphereOverride = null;
+      this._lightMultiplier = 1.0;
+      this.scene.background = new THREE.Color(0x87CEEB);
+      this.scene.fog = new THREE.Fog(this._defaultFogColor, this._defaultFogNear, this._defaultFogFar);
+      this._fogFixedColor = false;
+      return;
+    }
+
+    // Fog
+    if (config.fogColor) {
+      const fogColor = new THREE.Color(config.fogColor);
+      if (config.fogMode === 'exp') {
+        this.scene.fog = new THREE.FogExp2(fogColor, config.fogDensity || 0.03);
+        this._fogFixedColor = true; // prevent updateDaylight from overriding fog color
+      } else {
+        this.scene.fog = new THREE.Fog(fogColor, config.fogNear || 60, config.fogFar || 180);
+        this._fogFixedColor = false;
+      }
+      this.scene.background = fogColor.clone();
+    } else {
+      this.scene.background = new THREE.Color(0x87CEEB);
+    }
+
+    // Store override so updateDaylight won't overwrite fixed fog colors
+    this._atmosphereOverride = config.fogColor ? new THREE.Color(config.fogColor) : null;
+
+    // Light multiplier (applied by updateDaylight each frame)
+    this._lightMultiplier = config.lightMultiplier || 1.0;
   }
 
   updateDaylight(timeOfDay) {
@@ -555,9 +592,17 @@ export class Renderer {
       skyColor = sunsetColor.clone().lerp(nightColor, p);
     }
 
-    this.scene.background = skyColor;
-    if (this.scene.fog && !this.swampFogActive) {
-      this.scene.fog.color.copy(skyColor);
+    // If atmosphere override is active, keep fixed sky/fog colors instead of cycling
+    if (this._atmosphereOverride) {
+      this.scene.background.copy(this._atmosphereOverride);
+      if (this.scene.fog && !this._fogFixedColor) {
+        this.scene.fog.color.copy(this._atmosphereOverride);
+      }
+    } else {
+      this.scene.background = skyColor;
+      if (this.scene.fog && !this._fogFixedColor) {
+        this.scene.fog.color.copy(skyColor);
+      }
     }
 
     let lightIntensity;
@@ -570,8 +615,8 @@ export class Renderer {
     } else {
       lightIntensity = 0.1;
     }
-    this.directionalLight.intensity = lightIntensity;
-    this.ambientLight.intensity = 0.3 + 0.4 * lightIntensity;
+    this.directionalLight.intensity = lightIntensity * this._lightMultiplier;
+    this.ambientLight.intensity = (0.3 + 0.4 * lightIntensity) * this._lightMultiplier;
   }
 
   highlightTemporaryBlocks(positions, durationSeconds = 3, color = 0x00FF00) {

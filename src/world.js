@@ -144,6 +144,8 @@ export const ITEM = {
 };
 
 export const ITEM_NAMES = {
+  [ITEM.GRASS]: '草方块', [ITEM.DIRT]: '泥土', [ITEM.STONE]: '石头',
+  [ITEM.WOOD]: '木头', [ITEM.BRICK]: '砖块', [ITEM.WATER]: '水', [ITEM.LEAVES]: '树叶', [ITEM.FLOWER]: '花',
   [ITEM.PLANK]: '木板', [ITEM.STICK]: '木棍',
   [ITEM.SWORD_WOOD]: '木剑', [ITEM.SWORD_STONE]: '石剑', [ITEM.SWORD_IRON]: '铁剑',
   [ITEM.SWORD_DIAMOND]: '钻石剑', [ITEM.SWORD_NETHERITE]: '下界合金剑',
@@ -152,6 +154,8 @@ export const ITEM_NAMES = {
   [ITEM.SWORD_FROSTMOURNE]: '霜之哀伤', [ITEM.SWORD_DRAGON]: '屠龙宝刀',
   [ITEM.SLIME_BALL]: '黏液球',
   [ITEM.MUD]: '沼泽泥', [ITEM.CLAY]: '黏土', [ITEM.LILY_PAD]: '荷叶', [ITEM.REED]: '芦苇',
+  [ITEM.IRON_ORE_ITEM]: '铁矿石', [ITEM.GOLD_ORE_ITEM]: '金矿石', [ITEM.DIAMOND_ORE_ITEM]: '钻石矿石',
+  [ITEM.REDSTONE_ORE_ITEM]: '红石矿石', [ITEM.LAPIS_ORE_ITEM]: '青金石矿石',
   [ITEM.COAL]: '煤炭', [ITEM.PICKAXE_WOOD]: '木镐', [ITEM.PICKAXE_STONE]: '石镐',
   [ITEM.PICKAXE_IRON]: '铁镐', [ITEM.PICKAXE_DIAMOND]: '钻石镐',
   [ITEM.AXE_WOOD]: '木斧', [ITEM.AXE_STONE]: '石斧', [ITEM.AXE_IRON]: '铁斧',
@@ -300,6 +304,24 @@ export class ChunkManager {
     this.chunks = new Map(); // "cx,cz" -> Chunk
     this._ww = worldWidth || WORLD_WIDTH;
     this._wd = worldDepth || WORLD_DEPTH;
+    this._prebuilt = null; // loaded via loadPrebuilt()
+  }
+
+  /**
+   * Load prebuilt world data into the chunk manager.
+   * @param {Object} chunksData - { "cx,cz": "base64data", ... }
+   */
+  loadPrebuilt(chunksData) {
+    if (!chunksData) return;
+    for (const key of Object.keys(chunksData)) {
+      const [cx, cz] = key.split(',').map(Number);
+      const buf = Uint8Array.from(atob(chunksData[key]), c => c.charCodeAt(0));
+      const chunk = new Chunk(cx, cz);
+      chunk.blocks = new Uint8Array(buf);
+      chunk.dirty = true;
+      this.chunks.set(key, chunk);
+    }
+    this._prebuilt = null; // release memory, data is now in this.chunks
   }
 
   _key(cx, cz) { return `${cx},${cz}`; }
@@ -311,7 +333,14 @@ export class ChunkManager {
   getOrCreateChunk(cx, cz) {
     const key = this._key(cx, cz);
     if (!this.chunks.has(key)) {
-      this.chunks.set(key, new Chunk(cx, cz));
+      const chunk = new Chunk(cx, cz);
+      // Fill from prebuilt data if available
+      if (this._prebuilt && this._prebuilt.has(key)) {
+        const data = this._prebuilt.get(key);
+        chunk.blocks = new Uint8Array(data.blocks);
+        chunk.dirty = true;
+      }
+      this.chunks.set(key, chunk);
     }
     return this.chunks.get(key);
   }

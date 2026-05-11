@@ -8,6 +8,7 @@ const PLAYER_SPEED = 4.3;
 const PLAYER_WIDTH = 0.6;
 const PLAYER_HEIGHT = 1.8;
 const EYE_HEIGHT = 1.6;
+const COYOTE_TIME = 0.1; // seconds player can still jump after walking off edge
 
 export class Player {
   constructor(world) {
@@ -30,6 +31,7 @@ export class Player {
     this.maxHealth = 20;
     this.fallStartY = null;
     this.healTimer = 0;
+    this.coyoteTimer = 0;
 
     // Water/drowning system
     this.underwaterTimer = 0;
@@ -116,9 +118,16 @@ export class Player {
       this.velocity[2] = moveDir[2] * this.speed * this.speedMultiplier;
     }
 
+    // Coyote time: brief grace period after walking off edge
+    if (this.onGround) {
+      this.coyoteTimer = COYOTE_TIME;
+    } else {
+      this.coyoteTimer = Math.max(0, this.coyoteTimer - dt);
+    }
+
     // Jump: disabled in deep water, normal in shallow/land
     const canJump = !this.isFlying && !(inWater && by < WATER_LEVEL - 1);
-    if (input.consumeAction('jump') && this.onGround && canJump) {
+    if (input.consumeAction('jump') && (this.onGround || this.coyoteTimer > 0) && canJump) {
       this.velocity[1] = this.jumpVelocity;
       this.onGround = false;
     }
@@ -178,9 +187,9 @@ export class Player {
     this.position[0] += this.velocity[0] * dt;
     this.resolveCollisionX();
 
-    // Y axis (skip vertical collision when flying)
+    // Y axis (collision always active to prevent flying through ground)
     this.position[1] += this.velocity[1] * dt;
-    if (!this.isFlying) this.resolveCollisionY();
+    this.resolveCollisionY();
 
     // Z axis
     this.position[2] += this.velocity[2] * dt;

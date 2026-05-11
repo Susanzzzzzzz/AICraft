@@ -13,6 +13,8 @@ export class MCLevel {
     this.completionItemRewards = config.completionItemRewards || [];
     this.completed = false;
     this.rewardsClaimed = false;
+    this.prebuiltWorld = config.prebuiltWorld || null;
+    this.prebuiltBlocks = config.prebuiltBlocks || null;
   }
 
   // Check progress of all tasks based on player inventory

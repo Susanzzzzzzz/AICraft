@@ -152,6 +152,35 @@ node build.js
 open dist/AICraft.html
 ```
 
+## 🧱 Minecraft 地图导入 — 把你的 MC 世界搬进 AICraft
+
+你可以将 **Minecraft Java 版的 .mca 区域文件** 转换为 AICraft 的可游玩关卡，保留地形、建筑和地表物体。
+
+### 使用方法
+
+```bash
+# 1. 准备 MC Java 版存档（含 region/*.mca 文件）
+# 2. 运行转换工具
+node scripts/convert-mc-world.js --input path/to/mc-world/region/ --output dist/worlds/my-mc-level/
+
+# 3. 在 src/levelData.js 中添加关卡条目（参考 level_prebuilt_test）
+# 4. 构建
+node build.js
+```
+
+### 转换能力
+
+| 支持 | 不支持 |
+|------|--------|
+| 地形（石头/泥土/沙/雪等） | 红石电路和机械设备 |
+| 建筑（木板/砖/木等） | 容器内容物和实体 |
+| 树木和植被 | Y ≥ 64 的高层建筑（高度限制） |
+| 矿石和矿物 | 楼梯/栅栏的方向数据 |
+| 水和岩浆 | 生物群系颜色和光照 |
+| 家具方块（工作台/熔炉等） | 下界/末地维度 |
+
+块类型会自动映射到 AICraft 的 30 种方块类型。未识别的方块会被自动跳过。
+
 ## 📋 需求规格文档 — 自己动手搭建游戏
 
 项目提供了完整的 **OpenSpec 需求规格文档**，涵盖所有子系统的详细设计。你完全可以根据这些文档，使用 AI 编程工具（Claude Code）自行搭建整个游戏：

@@ -1,6 +1,6 @@
 // AICraft — Main game entry point
 import * as THREE from 'three';
-import { World, BLOCK, ITEM, ITEM_NAMES, WORLD_WIDTH, WORLD_HEIGHT, WORLD_DEPTH, BLOCK_COLORS, MAX_BLOCK_TYPE, getBlockDrop, BLOCK_HARDNESS } from './world.js';
+import { World, BLOCK, ITEM, ITEM_NAMES, WORLD_WIDTH, WORLD_HEIGHT, WORLD_DEPTH, BLOCK_COLORS, MAX_BLOCK_TYPE, getBlockDrop, BLOCK_HARDNESS, ChunkManager, isSolid } from './world.js';
 import { Renderer } from './renderer.js';
 import { Player } from './player.js';
 import { Input, parseCommand } from './input.js';
@@ -327,7 +327,7 @@ class Game {
       let groundY = -1;
       for (let y = 31; y >= 0; y--) {
         const block = this.world.getBlock(bx, y, bz);
-        if (block !== BLOCK.AIR && block !== BLOCK.WATER) {
+        if (isSolid(block)) {
           groundY = y + 1;
           break;
         }
@@ -359,26 +359,12 @@ class Game {
   }
 
   _initInventory() {
-    // Starting gear: basic tools, weapons, armor
-    this.inventory.addItem(ITEM.SWORD_WOOD, 1);
+    // Starting gear: basic weapon and crafting materials only
     this.inventory.addItem(ITEM.SWORD_STONE, 1);
-    this.inventory.addItem(ITEM.SWORD_DIAMOND, 1);
     this.inventory.addItem(ITEM.BOW, 1);
-    this.inventory.addItem(ITEM.ARROW, 16);
-    this.inventory.addItem(ITEM.WOOD, 8);
+    this.inventory.addItem(ITEM.ARROW, 8);
     this.inventory.addItem(ITEM.PLANK, 8);
-    this.inventory.addItem(ITEM.DIRT, 4);
-    this.inventory.addItem(ITEM.IRON_INGOT, 16);
-    // Add armor set
-    this.inventory.addItem(ITEM.IRON_HELMET, 1);
-    this.inventory.addItem(ITEM.IRON_CHESTPLATE, 1);
-    this.inventory.addItem(ITEM.IRON_LEGGINGS, 1);
-    this.inventory.addItem(ITEM.IRON_BOOTS, 1);
-    // Auto-equip armor
-    this.inventory.equipArmor(ITEM.IRON_HELMET);
-    this.inventory.equipArmor(ITEM.IRON_CHESTPLATE);
-    this.inventory.equipArmor(ITEM.IRON_LEGGINGS);
-    this.inventory.equipArmor(ITEM.IRON_BOOTS);
+    this.inventory.addItem(ITEM.STICK, 4);
   }
 
   _initSkillSystem() {
@@ -2868,7 +2854,7 @@ class Game {
 
   // ===== Level Switching =====
 
-  reloadLevel(levelIndex, variantIndex = 0) {
+  async reloadLevel(levelIndex, variantIndex = 0) {
     const level = LEVELS[levelIndex];
     if (!level) return;
 
@@ -2906,16 +2892,25 @@ class Game {
     // Compute deterministic seed for this level+variant
     const seed = 42 + levelIndex * 100 + variant.seedOffset;
 
-    // Generate world with config object
-    const genConfig = { biomeType: variant.biomeType || 'plains' };
-    if (variant.waterLevel !== undefined) genConfig.waterLevel = variant.waterLevel;
-    if (variant.prefabs) genConfig.prefabs = variant.prefabs;
-    if (variant.worldWidth !== undefined) genConfig.worldWidth = variant.worldWidth;
-    if (variant.worldDepth !== undefined) genConfig.worldDepth = variant.worldDepth;
-    this.world.generate(seed, genConfig);
+    // Reset flag so procedural levels get their own entity spawning
+    this._prebuiltEntitiesLoaded = false;
 
-    // Spawn animals
-    this._spawnAnimals();
+    // Generate world: prebuilt (MC-converted) or procedural
+    if (level.prebuiltWorld) {
+      await this._loadPrebuiltLevel(level);
+    } else {
+      const genConfig = { biomeType: variant.biomeType || 'plains' };
+      if (variant.waterLevel !== undefined) genConfig.waterLevel = variant.waterLevel;
+      if (variant.prefabs) genConfig.prefabs = variant.prefabs;
+      if (variant.worldWidth !== undefined) genConfig.worldWidth = variant.worldWidth;
+      if (variant.worldDepth !== undefined) genConfig.worldDepth = variant.worldDepth;
+      this.world.generate(seed, genConfig);
+    }
+
+    // Spawn animals (skip for MC-converted worlds with pre-loaded entities)
+    if (!this._prebuiltEntitiesLoaded) {
+      this._spawnAnimals();
+    }
 
     // Spawn initial slimes for swamp levels
     const isSwamp = (variant.biomeType === 'swamp');
@@ -2929,7 +2924,7 @@ class Game {
         let groundY = -1;
         for (let y = 31; y >= 0; y--) {
           const block = this.world.getBlock(bx, y, bz);
-          if (block !== BLOCK.AIR && block !== BLOCK.WATER) {
+          if (isSolid(block)) {
             groundY = y + 1;
             break;
           }
@@ -2945,8 +2940,10 @@ class Game {
       }
     }
 
-    // Spawn villagers
-    this._spawnVillagers();
+    // Spawn villagers (skip for MC-converted worlds with pre-loaded entities)
+    if (!this._prebuiltEntitiesLoaded) {
+      this._spawnVillagers();
+    }
 
     // Build meshes
     this.renderer.buildMeshes(this.world);
@@ -2958,7 +2955,7 @@ class Game {
     for (const v of this.villagers) allGroups.push(v.group);
     for (const g of allGroups) this.renderer.enableShadowsOnGroup(g);
 
-    // Reset player position
+    // Reset player position — find spawn at center of prebuilt world
     const spawnPos = this.world.findSpawnPosition();
     this.player.position = [...spawnPos];
     this.player.velocity = [0, 0, 0];
@@ -3018,6 +3015,126 @@ class Game {
     this.renderer.setAtmosphere(atmos);
   }
 
+  /** Load a prebuilt (MC-converted) level — returns Promise for async fetch */
+  async _loadPrebuiltLevel(level) {
+    let worldData = level.prebuiltBlocks || level._pendingData;
+
+    // Check for embedded prebuilt world data (built into HTML, no fetch needed)
+    if (!worldData && level.prebuiltWorld && typeof level.prebuiltWorld === 'string') {
+      const embedded = window.__PREBUILT_WORLDS__ && window.__PREBUILT_WORLDS__[level.prebuiltWorld];
+      if (embedded) {
+        try {
+          const data = JSON.parse(embedded);
+          worldData = data.blocks;
+          level._pendingData = worldData;
+        } catch (e) {
+          console.warn('Failed to parse embedded world data:', e);
+        }
+      }
+    }
+
+    // Fallback: fetch from URL
+    if (!worldData && level.prebuiltWorld && typeof level.prebuiltWorld === 'string') {
+      try {
+        const resp = await fetch(level.prebuiltWorld);
+        const data = await resp.json();
+        worldData = data.blocks;
+        level._pendingData = worldData;
+      } catch (err) {
+        console.error('Failed to load prebuilt world:', err);
+        return;
+      }
+    }
+
+    if (!worldData) return;
+
+    // Normalize chunk coordinates to start from (0,0)
+    // (MC maps use global chunk coords which may be far from origin)
+    const rawKeys = Object.keys(worldData);
+    const rawCoords = rawKeys.map(k => k.split(',').map(Number));
+    const cxs = rawCoords.map(c => c[0]);
+    const czs = rawCoords.map(c => c[1]);
+    const minCX = Math.min(...cxs);
+    const minCZ = Math.min(...czs);
+    const maxCX = Math.max(...cxs);
+    const maxCZ = Math.max(...czs);
+
+    if (minCX !== 0 || minCZ !== 0) {
+      const normalized = {};
+      for (const [key, val] of Object.entries(worldData)) {
+        const [cx, cz] = key.split(',').map(Number);
+        normalized[`${cx - minCX},${cz - minCZ}`] = val;
+      }
+      worldData = normalized;
+    }
+
+    const ww = (maxCX - minCX + 1) * 16;
+    const wd = (maxCZ - minCZ + 1) * 16;
+    this.world._ww = ww;
+    this.world._wd = wd;
+    this.world.chunkManager = new ChunkManager(ww, wd);
+    this.world.chunkManager.loadPrebuilt(worldData);
+    for (let t = 1; t <= MAX_BLOCK_TYPE; t++) this.world.dirtyTypes.add(t);
+    this.world._changes = {};
+
+    // ===== Load entities from prebuilt world (MC-converted NPCs/animals/hostiles) =====
+    this._prebuiltEntitiesLoaded = false;
+    if (worldData.entities && Array.isArray(worldData.entities) && worldData.entities.length > 0) {
+      const ENTITY_MAP = {
+        villager: { cls: Villager, list: 'villagers' },
+        pig:      { cls: Pig,      list: 'animals' },
+        cow:      { cls: Cow,      list: 'animals' },
+        sheep:    { cls: Sheep,    list: 'animals' },
+        chicken:  { cls: Chicken,  list: 'animals' },
+        zombie:   { cls: Zombie,   list: 'hostiles' },
+        skeleton: { cls: Skeleton, list: 'hostiles' },
+        spider:   { cls: Spider,   list: 'hostiles' },
+        creeper:  { cls: Creeper,  list: 'hostiles' },
+        enderman: { cls: Enderman, list: 'hostiles' },
+        wolf:     { cls: Wolf,     list: 'hostiles' },
+      };
+
+      for (const ent of worldData.entities) {
+        const x = ent.x, y = ent.y, z = ent.z;
+        const mapping = ENTITY_MAP[ent.type];
+        if (!mapping) continue;
+        const instance = new mapping.cls(this.world, [x, y, z]);
+        if (mapping.list === 'villagers') this.villagers.push(instance);
+        else if (mapping.list === 'animals') this.animals.push(instance);
+        else this.hostiles.push(instance);
+
+        // Ground check: scan downward from entity y to find first solid block
+        const bx = Math.floor(x);
+        const bz = Math.floor(z);
+        let groundY = null;
+        for (let gy = Math.floor(y); gy >= 0; gy--) {
+          const block = this.world.getBlock(bx, gy, bz);
+          if (isSolid(block)) {
+            groundY = gy + 0.5;
+            break;
+          }
+        }
+        if (groundY !== null && y < groundY) {
+          instance.position[1] = groundY;
+        }
+        if (typeof instance._updateGroupPosition === 'function') {
+          instance._updateGroupPosition();
+        }
+
+        this.renderer.scene.add(instance.group);
+        this._prebuiltEntitiesLoaded = true;
+      }
+    }
+
+    // ===== Apply suggested weather from converted world =====
+    if (worldData.suggestedWeather) {
+      const terrain = level.terrains && level.terrains[0];
+      if (terrain && terrain.atmosphere && terrain.atmosphere.weather === undefined) {
+        terrain.atmosphere.weather = worldData.suggestedWeather;
+      }
+    }
+  }
+
   showLevelSelect(fromNotification = false) {
     this._levelSelectFromNotification = fromNotification;
     // Hide pause screen (if coming from pause menu)
@@ -3051,43 +3168,70 @@ class Game {
     if (!container) return;
     container.innerHTML = '';
 
+    // Group levels by type
+    const proceduralLevels = [];
+    const importedLevels = [];
     for (let i = 0; i < LEVELS.length; i++) {
       const level = LEVELS[i];
-      const isUnlocked = this._isLevelUnlocked(i);
-      const isCompleted = level.completed;
-      const isCurrent = (i === this.currentLevelIndex);
-      const progress = level.getTaskProgress();
-      const doneCount = progress.filter(t => t.done).length;
-      const totalCount = progress.length;
-
-      const card = document.createElement('button');
-      card.className = 'level-card';
-      if (isCurrent) card.classList.add('current');
-      if (isCompleted) card.classList.add('completed');
-      if (!isUnlocked) card.classList.add('locked');
-      card.dataset.levelIndex = i;
-
-      card.innerHTML = `
-        <div class="level-card-header">
-          <span class="level-card-name">${level.name}</span>
-          ${isCompleted ? '<span class="level-card-status-check">&#10003;</span>' : ''}
-          ${!isUnlocked ? '<span class="level-card-status-lock">&#128274;</span>' : ''}
-        </div>
-        <div class="level-card-desc">${level.description}</div>
-        <div class="level-card-progress">进度: ${doneCount}/${totalCount}</div>
-      `;
-
-      card.addEventListener('click', () => {
-        if (!isUnlocked) return;
-        if (isCurrent) {
-          this._hideLevelSelect();
-          return;
-        }
-        this.reloadLevel(i, 0);
-      });
-
-      container.appendChild(card);
+      if (level.prebuiltWorld) {
+        importedLevels.push({ index: i, level });
+      } else {
+        proceduralLevels.push({ index: i, level });
+      }
     }
+
+    const renderGroup = (label, items, isImported) => {
+      if (items.length === 0) return;
+      const header = document.createElement('div');
+      header.className = 'level-section-header';
+      header.textContent = label;
+      container.appendChild(header);
+
+      for (const { index: i, level } of items) {
+        const isUnlocked = this._isLevelUnlocked(i);
+        const isCompleted = level.completed;
+        const isCurrent = (i === this.currentLevelIndex);
+        const progress = level.getTaskProgress();
+        const doneCount = progress.filter(t => t.done).length;
+        const totalCount = progress.length;
+
+        const card = document.createElement('button');
+        card.className = 'level-card';
+        if (isCurrent) card.classList.add('current');
+        if (isCompleted) card.classList.add('completed');
+        if (!isUnlocked) card.classList.add('locked');
+        if (isImported) card.classList.add('level-card-import');
+        card.dataset.levelIndex = i;
+
+        const badgeLabel = isImported ? '导入' : '随机';
+        const badgeClass = isImported ? 'level-badge-import' : 'level-badge-procedural';
+
+        card.innerHTML = `
+          <div class="level-card-header">
+            <span class="level-card-name">${level.name}</span>
+            <span class="level-badge ${badgeClass}">${badgeLabel}</span>
+            ${isCompleted ? '<span class="level-card-status-check">&#10003;</span>' : ''}
+            ${!isUnlocked ? '<span class="level-card-status-lock">&#128274;</span>' : ''}
+          </div>
+          <div class="level-card-desc">${level.description}</div>
+          <div class="level-card-progress">进度: ${doneCount}/${totalCount}</div>
+        `;
+
+        card.addEventListener('click', () => {
+          if (!isUnlocked) return;
+          if (isCurrent) {
+            this._hideLevelSelect();
+            return;
+          }
+          this.reloadLevel(i, 0);
+        });
+
+        container.appendChild(card);
+      }
+    };
+
+    renderGroup('— 随机地图 —', proceduralLevels, false);
+    renderGroup('— 外部导入 —', importedLevels, true);
   }
 
   showLevelCompleteNotification() {

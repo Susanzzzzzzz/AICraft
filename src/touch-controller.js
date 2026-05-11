@@ -561,24 +561,25 @@ export class TouchController {
     this.element.appendChild(invBtn);
     this._dom.invBtn = invBtn;
 
-    // 功能行：武器 + 飞行 + ↑↓
+    // 功能行：武器 + 视角 + 飞行 + ↑↓（2×3 网格）
     const funcRow = document.createElement('div');
     funcRow.className = 'touch-function-row';
     funcRow.style.cssText = `
       position: absolute;
       right: 8px;
       top: 110px;
-      display: flex;
-      flex-wrap: wrap;
-      width: 140px;
-      gap: 8px;
-      justify-content: center;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      width: auto;
       pointer-events: none;
       touch-action: none;
+      justify-items: center;
     `;
 
     const funcButtons = [
       { label: '武器', action: 'weaponSwitch' },
+      { label: '视角', action: 'toggleCamera' },
       { label: '飞行', action: 'flight' },
       { label: '↑', action: ACTION_ASCEND, extraClass: 'flight-only' },
       { label: '↓', action: ACTION_DESCEND, extraClass: 'flight-only' },
@@ -709,14 +710,6 @@ export class TouchController {
         this.input._actions.push('dodge_KeyD');
         this.input._actions.push('dodge_KeyShiftLeft');
         this.input._actions.push('dodge_KeySpace');
-        break;
-
-      case 'skillUseExplore':
-        this.input._actions.push('skillUseExplore');
-        break;
-
-      case 'skillCycleExplore':
-        this.input._actions.push('skillCycleExplore');
         break;
 
       case 'interact':

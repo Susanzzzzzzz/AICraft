@@ -1,5 +1,5 @@
 import * as esbuild from 'esbuild';
-import { readFileSync, writeFileSync, existsSync, mkdirSync, chmodSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, chmodSync, cpSync, readdirSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
@@ -41,17 +41,46 @@ export async function build() {
     .replace(/<script type="module" src="src\/main\.js"><\/script>/, '')
     .replace(/<script type="importmap">[\s\S]*?<\/script>/, '')
     .replace('</head>', `<style>${cssCode}</style>\n</head>`)
-    .replace('</body>', `<script>\n${jsCode}\n</script>\n</body>`);
+    .replace('</body>', `__GAME_SCRIPT__\n</body>`);
 
   if (imgDataUri) {
     html = html.replace(/src="[^"]*start-img.jpg"/, `src="${imgDataUri}"`);
   } else {
-    // Remove the img tag entirely so no broken image shows
     html = html.replace(/<img[^>]*start-img.jpg[^>]*>/, '');
   }
 
+  // Embed prebuilt world data FIRST (before game script)
+  const worldsEmbed = {};
+  const worldsDir = resolve(__dirname, 'data', 'worlds');
+  if (existsSync(worldsDir)) {
+    for (const entry of readdirSync(worldsDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const wjPath = resolve(worldsDir, entry.name, 'world-data.json');
+      if (!existsSync(wjPath)) continue;
+      worldsEmbed['worlds/' + entry.name + '/world-data.json'] = readFileSync(wjPath, 'utf8');
+    }
+  }
+  const embedScript = Object.keys(worldsEmbed).length > 0
+    ? `\n<script>window.__PREBUILT_WORLDS__=${JSON.stringify(worldsEmbed)}</script>\n`
+    : '';
+
+  // Replace placeholder with embed data + game script (embed FIRST so it's ready when game runs)
+  html = html.replace('__GAME_SCRIPT__', `${embedScript}<script>\n${jsCode}\n</script>`);
+
   writeFileSync(resolve(DIST, 'AICraft.html'), html);
   console.log(`Built ${(html.length / 1024).toFixed(0)}KB to dist/AICraft.html`);
+
+  // Copy prebuilt world data (if any) for runtime loading
+  const worldsSrc = resolve(__dirname, 'data', 'worlds');
+  const worldsDst = resolve(DIST, 'worlds');
+  try {
+    if (existsSync(worldsSrc) && typeof cpSync === 'function') {
+      cpSync(worldsSrc, worldsDst, { recursive: true, force: true });
+      console.log(`  Copied world data to dist/worlds/`);
+    }
+  } catch (e) {
+    // Silently skip if no world data or copy fails
+  }
 }
 
 // Dispatch

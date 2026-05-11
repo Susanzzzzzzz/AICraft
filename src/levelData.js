@@ -246,4 +246,52 @@ export const LEVELS = [
     }],
   }),
 
+  // 🌍 Prebuilt world — MC 高山地图转换
+  new MCLevel({
+    id: 'level_prebuilt_mountain',
+    name: '雪山之巅',
+    description: '从 MC 雪山地图转换而来，石山雪顶，矿石丰富',
+    tasks: [
+      { id: 't1', type: 'explore', target: 0, count: 1, current: 0, description: '探索雪山' },
+    ],
+    rewards: [],
+    unlockSkills: [],
+    terrains: [{ id: 'default', name: '雪山', seedOffset: 0, biomeType: 'plains',
+      atmosphere: { weather: 'snow', fogNear: 50, fogFar: 100 },
+    }],
+    prebuiltWorld: 'worlds/converted-map/world-data.json',
+  }),
+
+  // 🌍 Prebuilt world — Cube Survival 生存地图
+  new MCLevel({
+    id: 'level_cube_survival',
+    name: '方块生存',
+    description: 'Cube Survival 地图—沙滩、水域、树林，适合生存',
+    tasks: [
+      { id: 't1', type: 'explore', target: 0, count: 1, current: 0, description: '探索生存岛' },
+    ],
+    rewards: [],
+    unlockSkills: [],
+    terrains: [{ id: 'default', name: '生存岛', seedOffset: 0, biomeType: 'plains',
+      atmosphere: { fogNear: 50, fogFar: 100 },
+    }],
+    prebuiltWorld: 'worlds/cube-survival/world-data.json',
+  }),
+
+  // 🌍 Prebuilt world — FunLand 3.2 游乐场地图
+  new MCLevel({
+    id: 'level_funland',
+    name: '游乐天地',
+    description: 'FunLand 3.2—游乐场、建筑群，充满趣味探索',
+    tasks: [
+      { id: 't1', type: 'explore', target: 0, count: 1, current: 0, description: '探索游乐天地' },
+    ],
+    rewards: [],
+    unlockSkills: [],
+    terrains: [{ id: 'default', name: '游乐天地', seedOffset: 0, biomeType: 'plains',
+      atmosphere: { weather: 'none', fogNear: 50, fogFar: 100 },
+    }],
+    prebuiltWorld: 'worlds/funland/world-data.json',
+  }),
+
 ];

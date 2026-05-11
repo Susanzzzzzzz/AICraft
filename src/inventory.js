@@ -43,6 +43,35 @@ export class Inventory {
     return this.weaponSlot;
   }
 
+  /** Direct insert into storage/hotbar (bypasses weaponSlot routing) */
+  _directInsert(item) {
+    // Try stack onto existing
+    for (const slots of [this.hotbar, this.storage]) {
+      for (let i = 0; i < slots.length; i++) {
+        const slot = slots[i];
+        if (slot && slot.type === item.type && slot.count < MAX_STACK) {
+          const space = MAX_STACK - slot.count;
+          const amount = Math.min(space, item.count);
+          slot.count += amount;
+          item.count -= amount;
+          if (item.count <= 0) return true;
+        }
+      }
+    }
+    // Fill empty slots
+    for (const slots of [this.hotbar, this.storage]) {
+      for (let i = 0; i < slots.length; i++) {
+        if (!slots[i]) {
+          const amount = Math.min(item.count, MAX_STACK);
+          slots[i] = { type: item.type, count: amount };
+          item.count -= amount;
+          if (item.count <= 0) return true;
+        }
+      }
+    }
+    return item.count <= 0;
+  }
+
   addItem(type, count = 1) {
     const cat = this.getItemCategory(type);
     // Weapons go to weaponSlot (or swap)
@@ -54,10 +83,10 @@ export class Inventory {
           existing.count += canAdd;
           return count - canAdd === 0;
         }
-        // Different weapon — swap
+        // Different weapon — swap old directly into storage (no recursion)
         const old = existing;
         this.weaponSlot = { type, count };
-        this.addItem(old.type, old.count);
+        this._directInsert(old);
         return true;
       }
       this.weaponSlot = { type, count };
@@ -185,7 +214,7 @@ export class Inventory {
     const existing = this.armorSlots[slot];
     this.armorSlots[slot] = new ItemStack(itemType, 1);
     if (existing) {
-      this.addItem(existing.type, existing.count);
+      this._directInsert(existing);
     }
     this.removeItem(itemType, 1);
     return true;
@@ -194,11 +223,9 @@ export class Inventory {
   unequipArmor(slot) {
     const item = this.armorSlots[slot];
     if (!item) return false;
-    if (this.addItem(item.type, item.count)) {
-      this.armorSlots[slot] = null;
-      return true;
-    }
-    return false;
+    this.armorSlots[slot] = null;
+    this._directInsert(item);
+    return true;
   }
 
   /** Categorize item type */
@@ -232,18 +259,16 @@ export class Inventory {
     if (existing) {
       // Swap: put current weapon back, equip new one
       if (this.getItemCategory(existing.type) === 'tool') {
-        // tools can go to storage/hotbar
-        if (this.addItem(existing.type, existing.count)) {
-          this.weaponSlot = { type: itemType, count: 1 };
-          this.removeItem(itemType, 1);
-          return true;
-        }
-        return false;
+        // tools can go to storage/hotbar (directInsert avoids weaponSlot recursion)
+        this._directInsert(existing);
+        this.weaponSlot = { type: itemType, count: 1 };
+        this.removeItem(itemType, 1);
+        return true;
       }
       // weapon → weapon swap
       this.weaponSlot = { type: itemType, count: 1 };
       this.removeItem(itemType, 1);
-      if (existing) this.addItem(existing.type, existing.count);
+      this._directInsert(existing);
       return true;
     }
     this.weaponSlot = { type: itemType, count: 1 };
