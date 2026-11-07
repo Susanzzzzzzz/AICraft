@@ -24,7 +24,7 @@ import { MCAIController } from './MCAIController.js';
 import { getSkill } from './skillLibrary.js';
 import { MCSkill } from './MCSkill.js';
 import { WeatherManager } from './weather.js';
-import { HostileMob, Zombie, Skeleton, Spider, Creeper, Enderman, Wolf, CaveSpider, DropItem } from './hostiles.js';
+import { HostileMob, Zombie, Skeleton, Spider, Creeper, Enderman, Wolf, CaveSpider, Warden, DropItem } from './hostiles.js';
 import { Villager } from './villager.js';
 import { Diagnostics } from './diagnostics.js';
 
@@ -44,6 +44,7 @@ const EMOJI_MAP = new Map([
   // Chest, new stones
   [ITEM.CHEST, '🧰'],
   [ITEM.GRANITE_ITEM, '🧱'], [ITEM.DIORITE_ITEM, '🧱'], [ITEM.ANDESITE_ITEM, '🧱'],
+  [ITEM.SCULK, '🟦'], [ITEM.SCULK_SENSOR, '🟣'], [ITEM.GLOW_LICHEN, '✨'],
   // Crafted materials
   [ITEM.PLANK, '🪵'], [ITEM.STICK, '🥢'],
   // Weapons — swords
@@ -2940,6 +2941,15 @@ class Game {
       }
     }
 
+    // Deep Dark starts with one guaranteed Warden encounter near the spawn.
+    if (variant.biomeType === 'deep_dark') {
+      const spawn = this.world.findSpawnPosition();
+      const warden = new Warden(this.world, [spawn[0] + 8, spawn[1], spawn[2] + 8]);
+      this.hostiles.push(warden);
+      this.renderer.scene.add(warden.group);
+      if (this.renderer.enableShadowsOnGroup) this.renderer.enableShadowsOnGroup(warden.group);
+    }
+
     // Spawn villagers (skip for MC-converted worlds with pre-loaded entities)
     if (!this._prebuiltEntitiesLoaded) {
       this._spawnVillagers();
@@ -3092,6 +3102,7 @@ class Game {
         creeper:  { cls: Creeper,  list: 'hostiles' },
         enderman: { cls: Enderman, list: 'hostiles' },
         wolf:     { cls: Wolf,     list: 'hostiles' },
+        warden:   { cls: Warden,   list: 'hostiles' },
       };
 
       for (const ent of worldData.entities) {
@@ -3612,6 +3623,9 @@ class Game {
     let creeperWeight = 0.8, endermanWeight = 0.3, wolfWeight = 0.6, caveSpiderWeight = 0.4;
     if (biomeType && biomeType.includes('desert')) {
       skeletonWeight = 1.5; zombieWeight = 0.7; wolfWeight = 0.8; creeperWeight = 0.5; endermanWeight = 0.2;
+    } else if (biomeType && biomeType.includes('deep_dark')) {
+      zombieWeight = 0.15; skeletonWeight = 0.1; spiderWeight = 0.5;
+      creeperWeight = 1.2; endermanWeight = 1.0; wolfWeight = 0.0; caveSpiderWeight = 0.8;
     } else if (biomeType && (biomeType.includes('level_005') || biomeType.includes('cave'))) {
       spiderWeight = 1.5; zombieWeight = 0.5; skeletonWeight = 0.5;
       caveSpiderWeight = 1.5; creeperWeight = 1.0; endermanWeight = 0.8;
@@ -3665,6 +3679,10 @@ class Game {
 
   _handleHostileDeath(mob) {
     this.audioManager.playSFX('enemy_death');
+    if (mob instanceof Warden && this.currentLevel) {
+      const task = this.currentLevel.tasks.find(t => t.type === 'kill' && t.target === 'warden');
+      if (task) task.current = Math.min(task.count, (task.current || 0) + 1);
+    }
     const drops = mob.getDrops();
     for (const drop of drops) {
       if (!drop || drop.count <= 0) continue;

@@ -294,4 +294,28 @@ export const LEVELS = [
     prebuiltWorld: 'worlds/funland/world-data.json',
   }),
 
+  // 🌌 Deep Dark — 独立关卡：低照度、幽匿地形与监守者
+  new MCLevel({
+    id: 'level_deep_dark',
+    name: '深暗领域',
+    description: '深入幽匿洞窟，在回响与黑暗中寻找监守者的核心',
+    tasks: [
+      { id: 't1', type: 'collect', target: ITEM.SCULK, count: 24, current: 0, description: '收集 24 个幽匿块' },
+      { id: 't2', type: 'collect', target: ITEM.GLOW_LICHEN, count: 8, current: 0, description: '收集 8 个荧光苔藓' },
+      { id: 't3', type: 'kill', target: 'warden', count: 1, current: 0, description: '击败 1 个监守者' },
+      { id: 't4', type: 'explore', target: 0, count: 1, current: 0, description: '探索深暗领域', optional: true },
+    ],
+    rewards: [],
+    unlockSkills: ['mc_fight_002'],
+    terrains: [{
+      id: 'deep_dark', name: '幽匿洞窟', seedOffset: 700, biomeType: 'deep_dark',
+      atmosphere: { fogMode: 'exp', fogColor: '#07151B', fogDensity: 0.055, lightMultiplier: 0.28 },
+      prefabs: [
+        { file: 'sculk_shrine', minCount: 1, maxCount: 2 },
+        { file: 'rocks', minCount: 3, maxCount: 6 },
+        { file: 'mushroom', minCount: 2, maxCount: 5 },
+      ],
+    }],
+  }),
+
 ];

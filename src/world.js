@@ -51,9 +51,12 @@ export const BLOCK = {
   // Mesa/terracotta
   RED_SAND: 28,
   TERRACOTTA: 29,
+  SCULK: 30,
+  SCULK_SENSOR: 31,
+  GLOW_LICHEN: 32,
 };
 
-export const MAX_BLOCK_TYPE = 29;
+export const MAX_BLOCK_TYPE = 32;
 
 export const BLOCK_NAMES = [
   'Air', '草方块', '泥土', '石头', '木头', '砖块', '水', '树叶', '花',
@@ -61,7 +64,7 @@ export const BLOCK_NAMES = [
   '煤矿', '铁矿', '金矿', '钻石矿', '红石矿', '青金石矿',
   '沙子', '砂砾', '雪', '仙人掌', '宝箱', '火把',
   '花岗岩', '闪长岩', '安山岩',
-  '红沙', '陶瓦',
+  '红沙', '陶瓦', '幽匿块', '幽匿感测体', '荧光苔藓',
 ];
 
 export const BLOCK_COLORS = {
@@ -94,6 +97,9 @@ export const BLOCK_COLORS = {
   [BLOCK.ANDESITE]: 0x888888,
   [BLOCK.RED_SAND]: 0xD27D56,
   [BLOCK.TERRACOTTA]: 0xBF6B3A,
+  [BLOCK.SCULK]: 0x123642,
+  [BLOCK.SCULK_SENSOR]: 0x6D2C75,
+  [BLOCK.GLOW_LICHEN]: 0x8EE6C5,
 };
 
 export const BLOCK_OPACITY = {
@@ -141,6 +147,9 @@ export const ITEM = {
   ANDESITE_ITEM: 27,
   RED_SAND_ITEM: 28,
   TERRACOTTA_ITEM: 29,
+  SCULK: 150,
+  SCULK_SENSOR: 151,
+  GLOW_LICHEN: 152,
 };
 
 export const ITEM_NAMES = {
@@ -175,6 +184,9 @@ export const ITEM_NAMES = {
   [ITEM.ANDESITE_ITEM]: '安山岩',
   [ITEM.RED_SAND_ITEM]: '红沙',
   [ITEM.TERRACOTTA_ITEM]: '陶瓦',
+  [ITEM.SCULK]: '幽匿块',
+  [ITEM.SCULK_SENSOR]: '幽匿感测体',
+  [ITEM.GLOW_LICHEN]: '荧光苔藓',
   [ITEM.CHEST]: '宝箱', [ITEM.GUNPOWDER]: '火药', [ITEM.ENDER_PEARL]: '末影珍珠',
 };
 
@@ -207,6 +219,7 @@ export const ITEM_COLORS = {
   [ITEM.RED_SAND_ITEM]: 0xD27D56,
   [ITEM.TERRACOTTA_ITEM]: 0xBF6B3A,
   [ITEM.CHEST]: 0x8D6E63, [ITEM.GUNPOWDER]: 0x4A4A4A, [ITEM.ENDER_PEARL]: 0x9C27B0,
+  [ITEM.SCULK]: 0x123642, [ITEM.SCULK_SENSOR]: 0x6D2C75, [ITEM.GLOW_LICHEN]: 0x8EE6C5,
 };
 
 // Block hardness: break duration in seconds (default 1.0)
@@ -240,6 +253,9 @@ export const BLOCK_HARDNESS = {
   [BLOCK.ANDESITE]: 1.5,
   [BLOCK.RED_SAND]: 0.5,
   [BLOCK.TERRACOTTA]: 1.2,
+  [BLOCK.SCULK]: 1.8,
+  [BLOCK.SCULK_SENSOR]: 1.2,
+  [BLOCK.GLOW_LICHEN]: 0.1,
 };
 
 export function isSolid(block) {
@@ -249,6 +265,9 @@ export function isSolid(block) {
 // Block → item drop mapping (non-precision mining drops)
 const BLOCK_DROPS = {
   [BLOCK.STONE]: ITEM.COBBLESTONE,
+  [BLOCK.SCULK]: ITEM.SCULK,
+  [BLOCK.SCULK_SENSOR]: ITEM.SCULK_SENSOR,
+  [BLOCK.GLOW_LICHEN]: ITEM.GLOW_LICHEN,
 };
 
 export function getBlockDrop(blockType) {
@@ -629,6 +648,7 @@ export class World {
     const isTundraWorld = biomeType === 'tundra';
     const isCaveWorld = biomeType === 'cave';
     const isMesaWorld = biomeType === 'mesa';
+    const isDeepDarkWorld = biomeType === 'deep_dark';
 
     // Phase 1: Generate heightmap with multi-layer noise
     const heightMap = new Float32Array(w * d);
@@ -643,7 +663,10 @@ export class World {
         let height = Math.floor(20 + continent + hills + detail);
         height = Math.max(1, Math.min(h - 1, height));
 
-        if (isCaveWorld) {
+        if (isDeepDarkWorld) {
+          height = Math.floor(12 + simplex2D(x * 0.012, z * 0.012) * 4);
+          biomeMap[hmIdx(x, z)] = 10;
+        } else if (isCaveWorld) {
           height = Math.floor(18 + simplex2D(x * 0.01, z * 0.01) * 3);
           biomeMap[hmIdx(x, z)] = 5;
         } else if (isSwampWorld) {
@@ -671,7 +694,7 @@ export class World {
     }
 
     // Phase 2: Compute slope and classify biomes
-    if (!isSwampWorld && !isDesertWorld && !isTundraWorld && !isCaveWorld) {
+    if (!isSwampWorld && !isDesertWorld && !isTundraWorld && !isCaveWorld && !isDeepDarkWorld) {
       for (let x = 1; x < w - 1; x++) {
         for (let z = 1; z < d - 1; z++) {
           const idx = hmIdx(x, z);
@@ -756,8 +779,16 @@ export class World {
         const isCave = biome === 5;
         const isTundra = biome === 6;
         const isMesa = biome === 9;
+        const isDeepDark = biome === 10;
 
-        if (isSwamp) {
+        if (isDeepDark) {
+          for (let y = 0; y <= ht; y++) {
+            this.blocks[this.index(x, y, z)] = y === 0 ? BLOCK.SCULK : (y < ht - 2 ? BLOCK.STONE : BLOCK.SCULK);
+          }
+          if (simplex2D(x * 0.08 + 40, z * 0.08 + 40) > 0.25 && ht + 1 < h) {
+            this.blocks[this.index(x, ht + 1, z)] = BLOCK.GLOW_LICHEN;
+          }
+        } else if (isSwamp) {
           for (let y = 0; y <= ht; y++) {
             if (y === 0) {
               this.blocks[this.index(x, y, z)] = BLOCK.STONE;
@@ -819,23 +850,16 @@ export class World {
       }
     }
 
-    // Phase 5: Cave generation using 3D noise
-    {
-      for (let lx = 0; lx < CHUNK_SIZE; lx++) {
-        for (let lz = 0; lz < CHUNK_SIZE; lz++) {
-          const wx = worldXO + lx, wz = worldZO + lz;
-          for (let y = 4; y < WORLD_HEIGHT - 10; y++) {
-            const blockType = cm.getBlock(wx, y, wz);
-            if (blockType !== BLOCK.STONE) continue;
-            const variantNoise = simplex3D(wx * 0.015, y * 0.015, wz * 0.015);
-            if (variantNoise > 0.4) {
-              cm.setBlock(wx, y, wz, BLOCK.GRANITE);
-            } else if (variantNoise < -0.4) {
-              cm.setBlock(wx, y, wz, BLOCK.DIORITE);
-            } else if (variantNoise > 0.2 && variantNoise < 0.25) {
-              cm.setBlock(wx, y, wz, BLOCK.ANDESITE);
-            }
-          }
+    // Phase 5: Add underground stone variants in the non-chunk world path.
+    for (let x = 2; x < w - 2; x++) {
+      for (let y = 4; y < h - 10; y++) {
+        for (let z = 2; z < d - 2; z++) {
+          const idx = this.index(x, y, z);
+          if (this.blocks[idx] !== BLOCK.STONE) continue;
+          const variantNoise = simplex3D(x * 0.015, y * 0.015, z * 0.015);
+          if (variantNoise > 0.4) this.blocks[idx] = BLOCK.GRANITE;
+          else if (variantNoise < -0.4) this.blocks[idx] = BLOCK.DIORITE;
+          else if (variantNoise > 0.2 && variantNoise < 0.25) this.blocks[idx] = BLOCK.ANDESITE;
         }
       }
     }
@@ -1030,6 +1054,7 @@ export class World {
     const isJungleWorld = biomeType === 'jungle';
     const isCherryWorld = biomeType === 'cherry';
     const isMesaWorld = biomeType === 'mesa';
+    const isDeepDarkWorld = biomeType === 'deep_dark';
 
     // Heightmap for chunk columns + 2-cell border (for biome slope computation)
     const PAD = 2;
@@ -1049,7 +1074,10 @@ export class World {
         let height = Math.floor(20 + continent + hills + detail);
         height = Math.max(1, Math.min(WORLD_HEIGHT - 1, height));
 
-        if (isCaveWorld) {
+        if (isDeepDarkWorld) {
+          height = Math.floor(12 + simplex2D(wx * 0.012, wz * 0.012) * 4);
+          biomeMap[hmIdx(lx, lz)] = 10;
+        } else if (isCaveWorld) {
           height = Math.floor(18 + simplex2D(wx * 0.01, wz * 0.01) * 3);
           biomeMap[hmIdx(lx, lz)] = 5;
         } else if (isSwampWorld) {
@@ -1081,7 +1109,7 @@ export class World {
     }
 
     // Phase 2: Slope/biome classification (interior only)
-    if (!isSwampWorld && !isDesertWorld && !isTundraWorld && !isCaveWorld && !isMesaWorld) {
+    if (!isSwampWorld && !isDesertWorld && !isTundraWorld && !isCaveWorld && !isMesaWorld && !isDeepDarkWorld) {
       for (let lx = 0; lx < CHUNK_SIZE; lx++) {
         for (let lz = 0; lz < CHUNK_SIZE; lz++) {
           const idx = hmIdx(lx, lz);
@@ -1169,8 +1197,16 @@ export class World {
         const isCave = biome === 5;
         const isTundra = biome === 6;
         const isMesa = biome === 9;
+        const isDeepDark = biome === 10;
 
-        if (isSwamp) {
+        if (isDeepDark) {
+          for (let y = 0; y <= ht; y++) {
+            cm.setBlock(wx, y, wz, y === 0 ? BLOCK.SCULK : (y < ht - 2 ? BLOCK.STONE : BLOCK.SCULK));
+          }
+          if (simplex2D(wx * 0.08 + 40, wz * 0.08 + 40) > 0.25 && ht + 1 < WORLD_HEIGHT) {
+            cm.setBlock(wx, ht + 1, wz, BLOCK.GLOW_LICHEN);
+          }
+        } else if (isSwamp) {
           for (let y = 0; y <= ht; y++) {
             if (y === 0) {
               cm.setBlock(wx, y, wz, BLOCK.STONE);

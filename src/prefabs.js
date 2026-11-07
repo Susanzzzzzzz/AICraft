@@ -17,6 +17,7 @@ import cactusCluster from '../data/prefabs/cactus_cluster.json' with { type: 'js
 import fountain from '../data/prefabs/fountain.json' with { type: 'json' };
 import tent from '../data/prefabs/tent.json' with { type: 'json' };
 import lampPost from '../data/prefabs/lamp_post.json' with { type: 'json' };
+import sculkShrine from '../data/prefabs/sculk_shrine.json' with { type: 'json' };
 
 // File name (without .json) → prefab data lookup
 export const PREFAB_REGISTRY = {
@@ -36,6 +37,7 @@ export const PREFAB_REGISTRY = {
   fountain,
   tent,
   lamp_post: lampPost,
+  sculk_shrine: sculkShrine,
 };
 
 /**

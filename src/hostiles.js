@@ -979,6 +979,61 @@ const MOB_NAMES = {
   Enderman: '👁 末影人',
   Wolf: '🐺 狼',
   CaveSpider: '🕷洞穴蜘蛛',
+  Warden: '🟦 监守者',
 };
 
-export { HostileMob, Zombie, Skeleton, Spider, Creeper, Enderman, Wolf, CaveSpider };
+class Warden extends HostileMob {
+  constructor(world, position) {
+    super(world, position, {
+      maxHealth: 200, atk: 38, speed: 1.15,
+      attackRange: 2.5, attackCooldown: 1.15,
+      trackingRange: 24, width: 1.0, height: 2.9,
+    });
+    this._sonicTimer = 2.5;
+  }
+
+  _buildModel() {
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.7, 0.65), new THREE.MeshLambertMaterial({ color: 0x123642 }));
+    body.position.y = 0.95;
+    this.group.add(body);
+    const head = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 0.75), new THREE.MeshLambertMaterial({ color: 0x1b4c57 }));
+    head.position.y = 2.15;
+    this.group.add(head);
+    const eyeMat = new THREE.MeshBasicMaterial({ color: 0x5de6e8 });
+    for (const x of [-0.22, 0.22]) {
+      const eye = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.08, 0.03), eyeMat);
+      eye.position.set(x, 2.2, 0.39);
+      this.group.add(eye);
+    }
+    for (const x of [-0.38, 0.38]) {
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.28, 1.25, 0.28), new THREE.MeshLambertMaterial({ color: 0x0d2933 }));
+      arm.position.set(x, 0.9, 0);
+      this.group.add(arm);
+    }
+  }
+
+  update(dt, playerPos, timeOfDay) {
+    this._sonicTimer -= dt;
+    super.update(dt, playerPos, timeOfDay);
+    if (!this.dead && this._sonicTimer <= 0) {
+      const dx = playerPos[0] - this.position[0], dz = playerPos[2] - this.position[2];
+      if (Math.hypot(dx, dz) <= 18) {
+        this._sonicTimer = 3.8;
+        this._sonicAttackReady = true;
+      }
+    }
+  }
+
+  getAttackDamage() {
+    return this._sonicAttackReady ? 26 : this.atk;
+  }
+
+  resetAttackCooldown() {
+    super.resetAttackCooldown();
+    this._sonicAttackReady = false;
+  }
+
+  getDrops() { return [{ type: ITEM.SCULK_SENSOR, count: 1 }]; }
+}
+
+export { HostileMob, Zombie, Skeleton, Spider, Creeper, Enderman, Wolf, CaveSpider, Warden };

@@ -1,0 +1,13 @@
+{
+  "name": "幽匿祭坛",
+  "description": "深暗领域中的幽匿石祭坛",
+  "size": [5, 4, 5],
+  "tags": ["deep_dark", "structure"],
+  "palette": { "s": 30, "v": 31, "l": 32 },
+  "data": [
+    "  s  ",
+    " s s ",
+    "ssvss",
+    "sssss"
+  ]
+}
