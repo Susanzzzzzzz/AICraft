@@ -1,22 +1,22 @@
 // Prefab registry — loads all prefab JSON data for use in world generation
 // esbuild bundles JSON imports automatically
-import cabin from '../data/prefabs/cabin.json';
-import watchtower from '../data/prefabs/watchtower.json';
-import mineEntrance from '../data/prefabs/mine_entrance.json';
-import pyramid from '../data/prefabs/pyramid.json';
-import swampHut from '../data/prefabs/swamp_hut.json';
-import igloo from '../data/prefabs/igloo.json';
-import sakuraPavilion from '../data/prefabs/sakura_pavilion.json';
+import cabin from '../data/prefabs/cabin.json' with { type: 'json' };
+import watchtower from '../data/prefabs/watchtower.json' with { type: 'json' };
+import mineEntrance from '../data/prefabs/mine_entrance.json' with { type: 'json' };
+import pyramid from '../data/prefabs/pyramid.json' with { type: 'json' };
+import swampHut from '../data/prefabs/swamp_hut.json' with { type: 'json' };
+import igloo from '../data/prefabs/igloo.json' with { type: 'json' };
+import sakuraPavilion from '../data/prefabs/sakura_pavilion.json' with { type: 'json' };
 
-import rocks from '../data/prefabs/rocks.json';
-import deadTree from '../data/prefabs/dead_tree.json';
-import well from '../data/prefabs/well.json';
-import bush from '../data/prefabs/bush.json';
-import mushroom from '../data/prefabs/mushroom.json';
-import cactusCluster from '../data/prefabs/cactus_cluster.json';
-import fountain from '../data/prefabs/fountain.json';
-import tent from '../data/prefabs/tent.json';
-import lampPost from '../data/prefabs/lamp_post.json';
+import rocks from '../data/prefabs/rocks.json' with { type: 'json' };
+import deadTree from '../data/prefabs/dead_tree.json' with { type: 'json' };
+import well from '../data/prefabs/well.json' with { type: 'json' };
+import bush from '../data/prefabs/bush.json' with { type: 'json' };
+import mushroom from '../data/prefabs/mushroom.json' with { type: 'json' };
+import cactusCluster from '../data/prefabs/cactus_cluster.json' with { type: 'json' };
+import fountain from '../data/prefabs/fountain.json' with { type: 'json' };
+import tent from '../data/prefabs/tent.json' with { type: 'json' };
+import lampPost from '../data/prefabs/lamp_post.json' with { type: 'json' };
 
 // File name (without .json) → prefab data lookup
 export const PREFAB_REGISTRY = {
